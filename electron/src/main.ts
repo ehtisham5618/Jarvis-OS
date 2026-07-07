@@ -1,0 +1,403 @@
+import {
+  app,
+  BrowserWindow,
+  Tray,
+  Menu,
+  globalShortcut,
+  ipcMain,
+  nativeImage,
+  shell,
+  session,
+} from "electron";
+import * as path from "path";
+import windowStateKeeper from "electron-window-state";
+import log from "electron-log";
+import * as fs from "fs";
+import * as net from "net";
+import { ChildProcess, spawn } from "child_process";
+import { registerCriticalHandlers, registerDeferredHandlers } from "./ipc/index";
+import { IpcChannels } from "./ipc/channels";
+import { registerUpdaterHandlers, scheduleUpdateChecks } from "./ipc/updater.ipc";
+import { initCrashReporter } from "./telemetry/CrashReporter";
+import { initTelemetry } from "./telemetry/TelemetryService";
+
+// ─── Logger Configuration ──────────────────────────────────────────────────
+log.transports.file.level = "info";
+log.transports.console.level = "debug";
+log.info("Jarvis OS main process starting...");
+
+// ─── GPU & Memory Flags (M11) ──────────────────────────────────────────────
+app.commandLine.appendSwitch("enable-gpu-rasterization");
+app.commandLine.appendSwitch("enable-zero-copy");
+app.commandLine.appendSwitch("ignore-gpu-blocklist");
+app.commandLine.appendSwitch("max-old-space-size", "512");
+
+// ─── Dev Mode Detection ────────────────────────────────────────────────────
+const isDev = !app.isPackaged;
+const DEV_SERVER_URL = "http://localhost:8080";
+
+// ─── Log Cleanup (M11) ─────────────────────────────────────────────────────
+function cleanOldLogs() {
+  try {
+    const logPath = path.dirname(log.transports.file.getFile().path);
+    const files = fs.readdirSync(logPath);
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+
+    files.forEach((file) => {
+      if (file.endsWith(".log")) {
+        const filePath = path.join(logPath, file);
+        const stats = fs.statSync(filePath);
+        if (stats.mtimeMs < thirtyDaysAgo) {
+          fs.unlinkSync(filePath);
+          log.info(`[main] Deleted old log file: ${file}`);
+        }
+      }
+    });
+  } catch (err) {
+    log.error("[main] Failed to clean old logs:", err);
+  }
+}
+
+// ─── Find Free Port ────────────────────────────────────────────────────────
+function getFreePort(): Promise<number> {
+  return new Promise((resolve) => {
+    const srv = net.createServer();
+    srv.listen(0, () => {
+      const port = (srv.address() as net.AddressInfo).port;
+      srv.close(() => resolve(port));
+    });
+  });
+}
+
+let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
+let isAppQuitting = false;
+let prodServerPort: number | null = null;
+let nitroServer: ChildProcess | null = null;
+
+// ─── Window Creation ───────────────────────────────────────────────────────
+function createWindow(): void {
+  // Restore window state (position, size, maximized)
+  const windowState = windowStateKeeper({
+    defaultWidth: 1440,
+    defaultHeight: 900,
+  });
+
+  mainWindow = new BrowserWindow({
+    x: windowState.x,
+    y: windowState.y,
+    width: windowState.width,
+    height: windowState.height,
+    minWidth: 1024,
+    minHeight: 680,
+
+    // Frameless — we render our own titlebar
+    frame: false,
+    titleBarStyle: "hidden",
+
+    // Visual
+    backgroundColor: "#050608",
+    show: false, // Show after content loads (prevents white flash)
+    icon: path.join(__dirname, "../../public/icon.ico"),
+
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true, // Security: renderer cannot access Node APIs
+      nodeIntegration: false, // Security: never enable
+      sandbox: false, // Required for preload script to use ipcRenderer
+      webSecurity: true,
+    },
+  });
+
+  // Manage window state (save on move/resize)
+  windowState.manage(mainWindow);
+
+  // ─── Load Content ──────────────────────────────────────────────────────
+  if (isDev) {
+    log.info(`[main] Dev mode: loading ${DEV_SERVER_URL}`);
+    mainWindow.loadURL(DEV_SERVER_URL);
+    mainWindow.webContents.openDevTools({ mode: "detach" });
+  } else {
+    const url = `http://127.0.0.1:${prodServerPort}`;
+    log.info(`[main] Production mode: loading Nitro server at ${url}`);
+    // Use a simple loading page until the server port is confirmed ready
+    mainWindow.loadURL("data:text/html,<html><body style='background:#050608'></body></html>");
+    // The actual URL will be loaded by startApp() once the server is ready
+    mainWindow.webContents.once("did-finish-load", () => {
+      if (prodServerPort) mainWindow?.loadURL(url);
+    });
+  }
+
+  // ─── Window Events ────────────────────────────────────────────────────
+  // Show window after it's ready to avoid visual flash
+  mainWindow.once("ready-to-show", () => {
+    mainWindow?.show();
+    log.info(`[main] T1: Window shown at ${performance.now().toFixed(2)}ms`);
+
+    // Register non-critical handlers and plugins (M11)
+    setTimeout(() => {
+      registerDeferredHandlers();
+    }, 100);
+  });
+
+  // Minimize to tray on close (don't quit)
+  mainWindow.on("close", (event) => {
+    if (!isAppQuitting) {
+      event.preventDefault();
+      mainWindow?.hide();
+      log.info("[main] Window hidden to tray");
+    }
+  });
+
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
+
+  // Open external links in the default browser, not in Electron
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: "deny" };
+  });
+}
+
+// ─── Tray Setup ──────────────────────────────────────────────────────────
+function createTray(): void {
+  // Use a simple PNG icon for the tray (16×16)
+  const iconPath = path.join(__dirname, "../../public/tray-icon.png");
+  let trayIcon = nativeImage.createFromPath(iconPath);
+
+  // Fallback: if no custom tray icon yet, create a default one
+  if (trayIcon.isEmpty()) {
+    trayIcon = nativeImage.createEmpty();
+  }
+
+  tray = new Tray(trayIcon);
+  tray.setToolTip("Jarvis OS — Executive Intelligence");
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: "Show Jarvis",
+      click: () => {
+        mainWindow?.show();
+        mainWindow?.focus();
+      },
+    },
+    { type: "separator" },
+    {
+      label: "Quit Jarvis",
+      click: () => {
+        isAppQuitting = true;
+        app.quit();
+      },
+    },
+  ]);
+
+  tray.setContextMenu(contextMenu);
+
+  // Double-click tray icon → toggle window
+  tray.on("double-click", () => {
+    if (mainWindow?.isVisible()) {
+      mainWindow.hide();
+    } else {
+      mainWindow?.show();
+      mainWindow?.focus();
+    }
+  });
+}
+
+// ─── Global Hotkey ────────────────────────────────────────────────────────
+function registerGlobalShortcut(): void {
+  const registered = globalShortcut.register("CommandOrControl+Space", () => {
+    if (mainWindow?.isVisible()) {
+      mainWindow.hide();
+    } else {
+      mainWindow?.show();
+      mainWindow?.focus();
+    }
+  });
+
+  const voiceRegistered = globalShortcut.register("CommandOrControl+Shift+Space", () => {
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
+      mainWindow.webContents.send("voice:hotkey-toggle");
+    }
+  });
+
+  if (!registered) {
+    log.warn("[main] Failed to register global shortcut Ctrl+Space");
+  } else {
+    log.info("[main] Global shortcut Ctrl+Space registered");
+  }
+
+  if (!voiceRegistered) {
+    log.warn("[main] Failed to register global shortcut Ctrl+Shift+Space");
+  } else {
+    log.info("[main] Global shortcut Ctrl+Shift+Space registered");
+  }
+}
+
+// ─── IPC: Application Controls ────────────────────────────────────────────
+function registerAppControls(): void {
+  ipcMain.handle(IpcChannels.APP_GET_VERSION, () => app.getVersion());
+
+  ipcMain.on(IpcChannels.APP_QUIT, () => {
+    isAppQuitting = true;
+    app.quit();
+  });
+
+  ipcMain.on(IpcChannels.APP_MINIMIZE, () => mainWindow?.minimize());
+
+  ipcMain.on(IpcChannels.APP_MAXIMIZE, () => {
+    if (mainWindow?.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow?.maximize();
+    }
+  });
+
+  ipcMain.on(IpcChannels.APP_TOGGLE, () => {
+    if (mainWindow?.isVisible()) {
+      mainWindow.hide();
+    } else {
+      mainWindow?.show();
+      mainWindow?.focus();
+    }
+  });
+
+  ipcMain.on(IpcChannels.APP_SHOW, () => {
+    mainWindow?.show();
+    mainWindow?.focus();
+  });
+}
+
+// ─── Content Security Policy ──────────────────────────────────────────────
+function applyContentSecurityPolicy(): void {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [
+          [
+            "default-src 'self' http://127.0.0.1:*",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval needed for SSR hydration
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+            "font-src 'self' https://fonts.gstatic.com data:",
+            "connect-src 'self' http://127.0.0.1:* http://localhost:11434 ws://localhost:* ws://127.0.0.1:*", // Nitro + Ollama + Vite HMR
+            "img-src 'self' data: blob:",
+          ].join("; "),
+        ],
+      },
+    });
+  });
+}
+
+// ─── App Lifecycle ────────────────────────────────────────────────────────
+app.setAppUserModelId("com.jarvis-os.app");
+
+app.whenReady().then(() => {
+  log.info(`[main] T0: App ready at ${performance.now().toFixed(2)}ms`);
+
+  // M12: Initialize crash reporter and telemetry first
+  initCrashReporter();
+  initTelemetry(true);
+
+  cleanOldLogs();
+
+  // Register only critical IPC handlers before creating the window
+  registerCriticalHandlers();
+  registerAppControls();
+  applyContentSecurityPolicy();
+
+  // M12: Start production server if not in dev mode
+  const startApp = async () => {
+    // Create window immediately so the app feels responsive
+    createWindow();
+    createTray();
+    registerGlobalShortcut();
+
+    // M12: Register auto-updater after window is created
+    registerUpdaterHandlers(mainWindow!);
+    scheduleUpdateChecks(mainWindow!);
+
+    if (!isDev) {
+      try {
+        prodServerPort = await getFreePort();
+
+        // Build the path to the unpacked Nitro server
+        // __dirname is inside app.asar, Nitro must be in app.asar.unpacked
+        let serverPath = path.join(__dirname, "../../.output/server/index.mjs");
+        serverPath = serverPath.replace(/app\.asar[/\\]/g, "app.asar.unpacked/");
+        // Normalise to OS path separators for spawn
+        const serverNativePath = path.normalize(serverPath);
+        log.info(`[main] Spawning Nitro server: ${serverNativePath}`);
+
+        // Use spawn with node (process.execPath is the node bundled in Electron)
+        // ELECTRON_RUN_AS_NODE prevents a fork bomb — it makes Electron behave as pure Node
+        await new Promise<void>((resolve, reject) => {
+          nitroServer = spawn(process.execPath, [serverNativePath], {
+            env: {
+              ...process.env,
+              NITRO_PORT: prodServerPort!.toString(),
+              NITRO_HOST: "127.0.0.1",
+              ELECTRON_RUN_AS_NODE: "1",
+            },
+            stdio: "pipe",
+            detached: false,
+          });
+
+          const proc = nitroServer;
+          proc!.stdout?.on("data", (d: Buffer) => {
+            log.info(`[nitro] ${d.toString().trim()}`);
+          });
+          proc!.stderr?.on("data", (d: Buffer) => {
+            const msg = d.toString().trim();
+            log.info(`[nitro] ${msg}`);
+            if (msg.includes("Listening") || msg.includes("listening")) resolve();
+          });
+          proc!.on("error", (err: Error) => {
+            log.error("[main] Nitro spawn error:", err);
+            reject(err);
+          });
+          // Give up to 5 seconds to start
+          setTimeout(resolve, 5000);
+        });
+
+        log.info(`[main] Nitro server ready on port ${prodServerPort}`);
+
+        // Now load the real app URL into the already-open window
+        const url = `http://127.0.0.1:${prodServerPort}`;
+        log.info(`[main] Production mode: loading Nitro server at ${url}`);
+        mainWindow?.loadURL(url);
+      } catch (err) {
+        log.error("[main] Failed to start production server:", err);
+      }
+    }
+  };
+
+  startApp();
+});
+
+app.on("window-all-closed", () => {
+  // On Windows/Linux: don't quit when all windows are closed (we hide to tray instead)
+  // On macOS: standard behavior is to keep app running
+  if (process.platform !== "darwin") {
+    // Don't quit — the tray keeps us alive
+  }
+});
+
+app.on("activate", () => {
+  // macOS: re-create window if dock icon is clicked and no windows are open
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});
+
+app.on("will-quit", () => {
+  globalShortcut.unregisterAll();
+  if (nitroServer) {
+    nitroServer.kill();
+    log.info("[main] Nitro server killed");
+  }
+  log.info("[main] App quitting — all shortcuts unregistered");
+});
