@@ -1,59 +1,100 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Shell } from "@/components/desktop/Shell";
-import { PageHeader } from "@/components/desktop/primitives";
-import { Terminal, Zap, Package, Undo2, MessageSquare } from "lucide-react";
+import { useAIStore } from "@/stores/ai.store";
+import { MessageSquare, Trash2, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/history")({
   head: () => ({
-    meta: [{ title: "History · Jarvis" }, { name: "description", content: "Every command, install, and change — with one-click rollback." }],
+    meta: [{ title: "History · Jarvis" }],
   }),
   component: History,
 });
 
-const entries = [
-  { time: "19:04", tag: "AUTOMATION", icon: Zap, title: "Ran 'Morning briefing' — 4 steps", meta: "auto · 42s", color: "#7b5cff", undoable: false },
-  { time: "18:22", tag: "INSTALL", icon: Package, title: "Installed Blender 4.3.0", meta: "312 MB · verified", color: "#4f7dff", undoable: true },
-  { time: "17:41", tag: "COMMAND", icon: Terminal, title: "brew upgrade —greedy-latest", meta: "12 packages · success", color: "#61c7ff", undoable: false },
-  { time: "16:58", tag: "SYSTEM", icon: Zap, title: "Switched active model to Llama 3.1 70B", meta: "GPU warmed · 8s", color: "#4ade80", undoable: true },
-  { time: "15:11", tag: "CONVERSATION", icon: MessageSquare, title: "43-turn conversation about spatial layout", meta: "8,120 tokens", color: "#fbbf24", undoable: false },
-  { time: "14:02", tag: "INSTALL", icon: Package, title: "Installed 3 VS Code extensions", meta: "Rust · Nix · Zed themes", color: "#4f7dff", undoable: true },
-];
-
 function History() {
+  const navigate = useNavigate();
+  const { threads, setActiveThread, deleteThread, clearAllThreads } = useAIStore();
+
+  const sortedThreads = Object.values(threads).sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
+
   return (
     <Shell>
-      <div className="mx-auto max-w-5xl px-12 py-16">
-        <PageHeader eyebrow="Reversible" title="History" subtitle="Everything Jarvis has done for you. Reversible where safely possible." />
-        <div className="space-y-2">
-          {entries.map((e, i) => (
-            <div
-              key={i}
-              className="animate-fade-in group flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 transition hover:border-white/15 hover:bg-white/[0.04]"
-              style={{ animationDelay: `${i * 40}ms` }}
+      <div className="mx-auto max-w-4xl px-8 py-12">
+        <div className="mb-10 flex items-center justify-between animate-fade-in">
+          <div>
+            <h1 className="text-3xl font-light tracking-tight text-white/90">Conversation History</h1>
+            <p className="mt-2 text-sm text-white/40">
+              {sortedThreads.length} total threads
+            </p>
+          </div>
+          {sortedThreads.length > 0 && (
+            <button
+              onClick={() => {
+                if (confirm("Are you sure you want to delete all conversation history? This cannot be undone.")) {
+                  clearAllThreads();
+                }
+              }}
+              className="rounded-lg border border-red-500/20 bg-red-500/5 px-4 py-2 text-xs font-medium text-red-400 transition hover:bg-red-500/10"
             >
-              <div className="w-14 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground">{e.time}</div>
-              <div
-                className="grid size-9 shrink-0 place-items-center rounded-xl"
-                style={{ background: `${e.color}18`, boxShadow: `inset 0 0 0 1px ${e.color}30` }}
-              >
-                <e.icon className="size-4" style={{ color: e.color }} strokeWidth={1.75} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] font-medium uppercase tracking-widest" style={{ color: e.color }}>{e.tag}</span>
-                </div>
-                <div className="text-sm text-white/90">{e.title}</div>
-                <div className="text-[11px] text-muted-foreground">{e.meta}</div>
-              </div>
-              {e.undoable && (
-                <button className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[11px] text-muted-foreground opacity-0 transition hover:bg-white/[0.08] hover:text-white group-hover:opacity-100">
-                  <Undo2 className="size-3" /> Rollback
-                </button>
-              )}
-            </div>
-          ))}
+              Clear History
+            </button>
+          )}
         </div>
-        <div className="h-24" />
+
+        {sortedThreads.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
+            <div className="mb-4 grid size-12 place-items-center rounded-2xl bg-white/[0.03]">
+              <Calendar className="size-5 text-white/20" />
+            </div>
+            <h3 className="text-sm font-medium text-white/60">No history yet</h3>
+            <p className="mt-1 text-xs text-white/30">Your past conversations will appear here.</p>
+          </div>
+        ) : (
+          <div className="space-y-4 animate-fade-in" style={{ animationDelay: "100ms" }}>
+            {sortedThreads.map((thread) => {
+              const date = new Date(thread.updatedAt);
+              const isToday = new Date().toDateString() === date.toDateString();
+              
+              return (
+                <div
+                  key={thread.id}
+                  className="group flex items-center justify-between rounded-xl border border-white/[0.04] bg-white/[0.01] p-4 transition-all hover:bg-white/[0.03]"
+                >
+                  <button
+                    onClick={() => {
+                      setActiveThread(thread.id);
+                      navigate({ to: "/chat" });
+                    }}
+                    className="flex flex-1 items-start gap-4 text-left"
+                  >
+                    <div className="mt-1 grid size-8 shrink-0 place-items-center rounded-lg bg-white/[0.05]">
+                      <MessageSquare className="size-4 text-[#61c7ff]" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-white/80">{thread.title}</h3>
+                      <div className="mt-1.5 flex items-center gap-3 text-[11px] text-white/35">
+                        <span>
+                          {isToday ? "Today" : date.toLocaleDateString()}{" "}
+                          {date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                        <span className="size-1 rounded-full bg-white/10" />
+                        <span>{thread.messages.length} messages</span>
+                      </div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => deleteThread(thread.id)}
+                    className="grid size-8 place-items-center rounded-lg text-white/20 opacity-0 transition hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
+                    title="Delete thread"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </Shell>
   );
