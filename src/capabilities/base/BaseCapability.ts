@@ -6,8 +6,8 @@
  * and ensures that the Permission Engine is consulted before execution.
  */
 
-import { CapabilityError } from "../../errors";
-import { eventBus } from "../../event-bus";
+import { CapabilityError } from "../../core/errors";
+import { eventBus } from "../../core/event-bus";
 import type { CapabilityContext } from "./CapabilityContext";
 import type { CapabilityResult } from "./CapabilityResult";
 

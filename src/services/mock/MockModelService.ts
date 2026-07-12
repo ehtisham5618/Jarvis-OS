@@ -12,13 +12,13 @@ export class MockModelService implements IModelService {
     {
       id: "llama3.1:70b", name: "Llama 3.1", variant: "70B Instruct", developer: "Meta",
       parameters: "70B", contextLength: 128000, vramRequired: 42, ramRequired: 48, quantization: "Q4_K_M",
-      installed: true, active: true, recommended: true,
+      installed: true, recommended: true,
       vision: false, embeddings: false, reasoning: true, coding: true, multilingual: true,
     },
     {
       id: "qwen2.5-coder:32b", name: "Qwen 2.5", variant: "Coder 32B", developer: "Alibaba",
       parameters: "32B", contextLength: 32000, vramRequired: 22, ramRequired: 32, quantization: "Q4_K_M",
-      installed: true, active: false, recommended: false,
+      installed: true, recommended: false,
       vision: false, embeddings: false, reasoning: true, coding: true, multilingual: true,
     },
   ];

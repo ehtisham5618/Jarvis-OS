@@ -7,7 +7,8 @@
 
 import type { AutonomyLevel } from "@/services/interfaces/IUserService";
 import type { PermissionCheckRequest, PermissionCheckResult } from "./PermissionTypes";
-import { PermissionError } from "../../errors";
+import { PermissionError } from "../errors";
+import type { CapabilityContext } from "../../capabilities/base/CapabilityContext";
 
 const AUTONOMY_HIERARCHY: Record<AutonomyLevel, number> = {
   observe: 0,   // Can only read data, no mutations

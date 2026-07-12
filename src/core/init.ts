@@ -2,32 +2,52 @@ import { serviceRegistry, ServiceToken } from "./service-registry";
 import { MockSystemService } from "@/services/mock/MockSystemService";
 import { MockAIService } from "@/services/mock/MockAIService";
 import { MockModelService } from "@/services/mock/MockModelService";
+import { ElectronSystemService } from "@/services/electron/ElectronSystemService";
 import { OllamaService } from "@/services/ollama/OllamaService";
-import { configManager } from "./config";
 import { Logger } from "./logger";
 
 const log = Logger.for("boot");
 
 let isInitialized = false;
 
+/**
+ * Returns true when the renderer is running inside Electron.
+ * Checks for the contextBridge-exposed `window.jarvisOS` object.
+ */
+function isRunningInElectron(): boolean {
+  return typeof window !== "undefined" && "jarvisOS" in window;
+}
+
 export async function initializeJarvis(): Promise<void> {
   if (isInitialized) return;
 
-  log.info("Booting Jarvis OS core...");
+  const inElectron = isRunningInElectron();
 
-  // 1. Register base services
-  serviceRegistry.register(ServiceToken.System, new MockSystemService());
+  log.info(`Booting Jarvis OS core... [host: ${inElectron ? "Electron" : "Browser"}]`);
+
+  // ─── 1. System Service ──────────────────────────────────────────────────
+  if (inElectron) {
+    // Real Windows hardware data via IPC bridge
+    log.info("Electron detected — wiring native system service.");
+    serviceRegistry.register(ServiceToken.System, new ElectronSystemService());
+  } else {
+    // Browser dev mode — realistic simulation
+    log.warn("Browser context — wiring mock system service.");
+    serviceRegistry.register(ServiceToken.System, new MockSystemService());
+  }
+
+  // ─── 2. Model Service ───────────────────────────────────────────────────
   serviceRegistry.register(ServiceToken.Model, new MockModelService());
-  
-  // 2. Initialize AI Service (Check Ollama first, fallback to Mock)
+
+  // ─── 3. AI Service: Ollama → Mock fallback ──────────────────────────────
   const ollama = new OllamaService();
   const isOllamaUp = await ollama.isAvailable();
-  
+
   if (isOllamaUp) {
-    log.info("Ollama detected. Wiring real AI engine.");
+    log.info("Ollama online — wiring real AI engine.");
     serviceRegistry.register(ServiceToken.AI, ollama);
   } else {
-    log.warn("Ollama unreachable. Wiring Mock AI engine.");
+    log.warn("Ollama unreachable — wiring mock AI engine.");
     serviceRegistry.register(ServiceToken.AI, new MockAIService());
   }
 

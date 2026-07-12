@@ -5,8 +5,8 @@
  * This is the central hub where the Planner sends execution requests.
  */
 
-import { JarvisError } from "../../errors";
-import type { BaseCapability } from "../base/BaseCapability";
+import { JarvisError } from "../errors";
+import { BaseCapability } from "../../capabilities/base/BaseCapability";
 
 export class CapabilityRegistrationError extends JarvisError {
   constructor(message: string) {

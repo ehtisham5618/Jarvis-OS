@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Wallpaper } from "./Wallpaper";
 import { Sidebar } from "./Sidebar";
 import { WidgetsPanel } from "./WidgetsPanel";
+import { TitleBar } from "./TitleBar";
 
 export function Shell({
   children,
@@ -11,13 +12,17 @@ export function Shell({
   showWidgets?: boolean;
 }) {
   return (
-    <div className="fixed inset-0 flex overflow-hidden bg-background text-foreground">
+    <div className="fixed inset-0 flex flex-col overflow-hidden bg-background text-foreground">
+      {/* Electron-only: custom frameless window titlebar */}
+      <TitleBar />
       <Wallpaper />
-      <Sidebar />
-      <main className="relative z-10 flex-1 overflow-y-auto">
-        <div className="animate-fade-in min-h-full">{children}</div>
-      </main>
-      {showWidgets && <WidgetsPanel />}
+      <div className="relative flex flex-1 overflow-hidden">
+        <Sidebar />
+        <main className="relative z-10 flex-1 overflow-y-auto">
+          <div className="animate-fade-in min-h-full">{children}</div>
+        </main>
+        {showWidgets && <WidgetsPanel />}
+      </div>
       <WorkingPill />
     </div>
   );
