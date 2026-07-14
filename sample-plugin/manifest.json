@@ -1,0 +1,19 @@
+{
+  "id": "com.jarvis.sample-plugin",
+  "name": "Sample Plugin",
+  "version": "1.0.0",
+  "description": "A sample plugin that adds clipboard summarization.",
+  "author": "Jarvis Devs",
+  "permissions": ["clipboard", "notifications"],
+  "main": "index.js",
+  "minJarvisVersion": "1.0.0",
+  "contributes": {
+    "capabilities": [
+      {
+        "id": "summarize_clipboard",
+        "name": "Summarize Clipboard",
+        "description": "Reads the clipboard and summarizes it."
+      }
+    ]
+  }
+}
