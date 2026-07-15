@@ -1,0 +1,36 @@
+{
+  "categories": [
+    {
+      "title": "## 🚀 Features",
+      "labels": ["feat", "feature"]
+    },
+    {
+      "title": "## 🐛 Bug Fixes",
+      "labels": ["fix", "bug"]
+    },
+    {
+      "title": "## ⚡ Performance",
+      "labels": ["perf"]
+    },
+    {
+      "title": "## 🔒 Security",
+      "labels": ["security"]
+    },
+    {
+      "title": "## 🏗️ Infrastructure",
+      "labels": ["chore", "ci", "build"]
+    },
+    {
+      "title": "## 📝 Documentation",
+      "labels": ["docs"]
+    }
+  ],
+  "pr_template": "- #{{TITLE}} by @{{AUTHOR}} in ##{{NUMBER}}",
+  "empty_template": "- No changes",
+  "label_extractor": [
+    {
+      "pattern": "^(feat|fix|perf|security|chore|ci|build|docs)(\\(.*\\))?:",
+      "target": "$1"
+    }
+  ]
+}
