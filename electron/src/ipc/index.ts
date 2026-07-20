@@ -6,6 +6,9 @@ import { registerNotificationHandlers } from "./notification.ipc";
 import { registerDialogHandlers } from "./dialog.ipc";
 import { registerProcessHandlers } from "./process.ipc";
 import { registerMemoryHandlers } from "./memory.ipc";
+import { registerVoiceHandlers } from "./voice.ipc";
+import { registerTtsHandlers } from "./tts.ipc";
+import { registerVisionHandlers } from "./vision.ipc";
 
 /**
  * Register all IPC handlers in one place.
@@ -20,4 +23,7 @@ export function registerAllHandlers(): void {
   registerDialogHandlers();
   registerProcessHandlers();
   registerMemoryHandlers();
+  registerVoiceHandlers();
+  registerTtsHandlers();
+  registerVisionHandlers();
 }

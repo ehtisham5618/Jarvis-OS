@@ -46,6 +46,24 @@ export const IpcChannels = {
   MEMORY_DELETE:         "memory:delete",
   MEMORY_CLEAR:          "memory:clear",
 
+  // ─── Voice (STT) ─────────────────────────────────────
+  VOICE_START_RECORDING: "voice:start-recording",
+  VOICE_STOP_RECORDING:  "voice:stop-recording",
+  VOICE_TRANSCRIBE:      "voice:transcribe",
+  VOICE_LIST_DEVICES:    "voice:list-devices",
+  VOICE_SET_DEVICE:      "voice:set-device",
+
+  // ─── Voice Output (TTS) ──────────────────────────────
+  TTS_SPEAK:             "tts:speak",
+  TTS_STOP:              "tts:stop",
+  TTS_LIST_VOICES:       "tts:list-voices",
+  TTS_SET_VOICE:         "tts:set-voice",
+
+  // ─── Vision (Screen Capture + OCR) ───────────────────
+  VISION_SCREENSHOT:     "vision:screenshot",
+  VISION_OCR:            "vision:ocr",
+  VISION_ANALYZE:        "vision:analyze",
+
   // ─── Application ─────────────────────────────────────
   APP_GET_VERSION:       "app:get-version",
   APP_QUIT:              "app:quit",

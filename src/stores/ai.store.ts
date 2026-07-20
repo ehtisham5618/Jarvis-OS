@@ -287,6 +287,20 @@ export const useAIStore = create<AIState>()(
               };
             });
           }
+
+          // Trigger Auto-speak if enabled
+          const { useSettingsStore } = await import("@/stores/settings.store");
+          const { voice } = useSettingsStore.getState();
+          if (voice.autoSpeak && !currentAbortController?.signal.aborted) {
+            const finalThread = get().threads[activeThreadId!];
+            if (finalThread) {
+              const lastMsg = finalThread.messages[finalThread.messages.length - 1];
+              if (lastMsg && lastMsg.role === "assistant" && lastMsg.content) {
+                const voiceService = serviceRegistry.resolve<import("@/services/interfaces/IVoiceService").IVoiceService>(ServiceToken.Voice);
+                voiceService.speak(lastMsg.content).catch(err => log.warn("TTS failed", { error: err }));
+              }
+            }
+          }
         } catch (err) {
           log.error("Failed to stream response", { error: err });
           set({ isStreaming: false });

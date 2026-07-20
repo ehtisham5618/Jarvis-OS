@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useNavigate,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -148,6 +149,17 @@ function RootComponent() {
       </div>
     );
   }
+
+  const navigate = useNavigate();
+
+  // Handle Voice Hotkey
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.jarvisOS?.voice?.onHotkeyToggle) {
+      return window.jarvisOS.voice.onHotkeyToggle(() => {
+        navigate({ to: "/voice" });
+      });
+    }
+  }, [navigate]);
 
   return (
     <QueryClientProvider client={queryClient}>

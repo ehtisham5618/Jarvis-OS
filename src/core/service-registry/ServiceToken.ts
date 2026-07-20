@@ -13,4 +13,5 @@ export const ServiceToken = {
   User:       Symbol.for("jarvis.service.user"),
   Automation: Symbol.for("jarvis.service.automation"),
   Windows:    Symbol.for("jarvis.service.windows"),
+  Voice:      Symbol.for("jarvis.service.voice"),
 } as const;

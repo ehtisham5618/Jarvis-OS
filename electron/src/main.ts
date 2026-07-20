@@ -159,10 +159,24 @@ function registerGlobalShortcut(): void {
     }
   });
 
+  const voiceRegistered = globalShortcut.register("CommandOrControl+Shift+Space", () => {
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
+      mainWindow.webContents.send("voice:hotkey-toggle");
+    }
+  });
+
   if (!registered) {
     log.warn("[main] Failed to register global shortcut Ctrl+Space");
   } else {
     log.info("[main] Global shortcut Ctrl+Space registered");
+  }
+
+  if (!voiceRegistered) {
+    log.warn("[main] Failed to register global shortcut Ctrl+Shift+Space");
+  } else {
+    log.info("[main] Global shortcut Ctrl+Shift+Space registered");
   }
 }
 

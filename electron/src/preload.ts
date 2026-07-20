@@ -71,6 +71,34 @@ const jarvisOS = {
     clear:  ()                              => ipcRenderer.invoke(IpcChannels.MEMORY_CLEAR),
   },
 
+  // ─── Voice (STT) ───────────────────────────────────────────────────────────
+  voice: {
+    startRecording: () => ipcRenderer.invoke(IpcChannels.VOICE_START_RECORDING),
+    stopRecording:  () => ipcRenderer.invoke(IpcChannels.VOICE_STOP_RECORDING),
+    transcribe:     (pcmData: Uint8Array) => ipcRenderer.invoke(IpcChannels.VOICE_TRANSCRIBE, pcmData),
+    listDevices:    () => ipcRenderer.invoke(IpcChannels.VOICE_LIST_DEVICES),
+    setDevice:      (deviceId: string) => ipcRenderer.invoke(IpcChannels.VOICE_SET_DEVICE, deviceId),
+    onHotkeyToggle: (callback: () => void) => {
+      ipcRenderer.on("voice:hotkey-toggle", callback);
+      return () => { ipcRenderer.removeListener("voice:hotkey-toggle", callback); };
+    },
+  },
+
+  // ─── Voice Output (TTS) ────────────────────────────────────────────────────
+  tts: {
+    speak:      (text: string) => ipcRenderer.invoke(IpcChannels.TTS_SPEAK, text),
+    stop:       () => ipcRenderer.invoke(IpcChannels.TTS_STOP),
+    listVoices: () => ipcRenderer.invoke(IpcChannels.TTS_LIST_VOICES),
+    setVoice:   (voiceId: string) => ipcRenderer.invoke(IpcChannels.TTS_SET_VOICE, voiceId),
+  },
+
+  // ─── Vision (Screen Capture + OCR) ─────────────────────────────────────────
+  vision: {
+    screenshot: () => ipcRenderer.invoke(IpcChannels.VISION_SCREENSHOT),
+    ocr:        (imageBuffer: Uint8Array) => ipcRenderer.invoke(IpcChannels.VISION_OCR, imageBuffer),
+    analyze:    (imageBuffer: Uint8Array, prompt: string) => ipcRenderer.invoke(IpcChannels.VISION_ANALYZE, imageBuffer, prompt),
+  },
+
   // ─── Application ───────────────────────────────────────────────────────────
   app: {
     getVersion: ()          => ipcRenderer.invoke(IpcChannels.APP_GET_VERSION),

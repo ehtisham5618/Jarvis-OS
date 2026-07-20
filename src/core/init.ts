@@ -36,12 +36,18 @@ export async function initializeJarvis(): Promise<void> {
     serviceRegistry.register(ServiceToken.System, new ElectronSystemService());
     serviceRegistry.register(ServiceToken.Windows, new ElectronWindowsService());
     serviceRegistry.register(ServiceToken.Memory, new ElectronMemoryService());
+    import("@/services/electron/ElectronVoiceService").then((m) =>
+      serviceRegistry.register(ServiceToken.Voice, new m.ElectronVoiceService())
+    );
   } else {
     // Browser dev mode — realistic simulation
     log.warn("Browser context — wiring mock system service.");
     serviceRegistry.register(ServiceToken.System, new MockSystemService());
     serviceRegistry.register(ServiceToken.Windows, new MockWindowsService());
     serviceRegistry.register(ServiceToken.Memory, new MockMemoryService());
+    import("@/services/mock/MockVoiceService").then((m) =>
+      serviceRegistry.register(ServiceToken.Voice, new m.MockVoiceService())
+    );
   }
 
   // ─── 2. Model Service ───────────────────────────────────────────────────
