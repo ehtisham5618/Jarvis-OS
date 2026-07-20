@@ -5,12 +5,14 @@
  * copy-to-clipboard on code blocks, and styled GFM elements.
  */
 
-import { useState } from "react";
+import { useState, Suspense, lazy, memo, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Copy, Check } from "lucide-react";
+import MarkdownRenderWorker from "@/workers/markdownRender.worker?worker";
+
+// Lazy load the heavy syntax highlighter
+const CodeBlock = lazy(() => import("./CodeBlock"));
 
 interface MarkdownRendererProps {
   content: string;
@@ -48,6 +50,24 @@ function CopyButton({ code }: { code: string }) {
 }
 
 export function MarkdownRenderer({ content, className }: MarkdownRendererProps) {
+  const [workerHtml, setWorkerHtml] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (content.length > 10000) {
+      const worker = new MarkdownRenderWorker();
+      worker.onmessage = (e) => {
+        if (e.data.success) {
+          setWorkerHtml(e.data.html);
+        }
+        worker.terminate();
+      };
+      worker.postMessage({ content });
+      return () => worker.terminate();
+    } else {
+      setWorkerHtml(null);
+    }
+  }, [content]);
+
   return (
     <div
       className={[
@@ -69,74 +89,67 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
         .filter(Boolean)
         .join(" ")}
     >
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={{
-          code({ node: _node, className, children, ...props }) {
-            const match = /language-(\w+)/.exec(className || "");
-            const isInline = !match;
-            const codeString = String(children).replace(/\n$/, "");
+      {workerHtml !== null ? (
+        <div dangerouslySetInnerHTML={{ __html: workerHtml }} />
+      ) : (
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            code({ node: _node, className, children, ...props }) {
+              const match = /language-(\w+)/.exec(className || "");
+              const isInline = !match;
+              const codeString = String(children).replace(/\n$/, "");
 
-            if (isInline) {
+              if (isInline) {
+                return (
+                  <code
+                    className="rounded bg-white/[0.08] px-1.5 py-0.5 font-mono text-[0.82em] text-[#61c7ff]"
+                    {...props}
+                  >
+                    {children}
+                  </code>
+                );
+              }
+
+              const language = match[1];
+
               return (
-                <code
-                  className="rounded bg-white/[0.08] px-1.5 py-0.5 font-mono text-[0.82em] text-[#61c7ff]"
-                  {...props}
-                >
-                  {children}
-                </code>
-              );
-            }
-
-            const language = match[1];
-
-            return (
-              <div className="not-prose my-3 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0d0f12]">
-                {/* Code block header */}
-                <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2">
-                  <span className="font-mono text-[10px] font-medium uppercase tracking-widest text-white/40">
-                    {language}
-                  </span>
-                  <CopyButton code={codeString} />
+                <div className="not-prose my-3 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0d0f12]">
+                  {/* Code block header */}
+                  <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2">
+                    <span className="font-mono text-[10px] font-medium uppercase tracking-widest text-white/40">
+                      {language}
+                    </span>
+                    <CopyButton code={codeString} />
+                  </div>
+                  {/* Syntax-highlighted code */}
+                  <Suspense fallback={<div className="p-4 text-xs text-white/40 font-mono">Loading highlighter...</div>}>
+                    <CodeBlock language={language} code={codeString} />
+                  </Suspense>
                 </div>
-                {/* Syntax-highlighted code */}
-                <SyntaxHighlighter
-                  style={oneDark}
-                  language={language}
-                  PreTag="div"
-                  customStyle={{
-                    margin: 0,
-                    padding: "1rem",
-                    background: "transparent",
-                    fontSize: "0.8rem",
-                    lineHeight: "1.6",
-                  }}
-                >
-                  {codeString}
-                </SyntaxHighlighter>
-              </div>
-            );
-          },
-          // Styled table wrapper
-          table({ children }) {
-            return (
-              <div className="not-prose my-3 overflow-x-auto rounded-xl border border-white/[0.08]">
-                <table className="w-full">{children}</table>
-              </div>
-            );
-          },
-          // Styled blockquote
-          blockquote({ children }) {
-            return (
-              <blockquote className="not-prose my-3 border-l-2 border-[#4f7dff] pl-4 text-sm text-white/60 italic">
-                {children}
-              </blockquote>
-            );
-          },
-        }}
-      >
-        {content}
-      </ReactMarkdown>
+              );
+            },
+            // Styled table wrapper
+            table({ children }) {
+              return (
+                <div className="not-prose my-3 overflow-x-auto rounded-xl border border-white/[0.08]">
+                  <table className="w-full">{children}</table>
+                </div>
+              );
+            },
+            // Styled blockquote
+            blockquote({ children }) {
+              return (
+                <blockquote className="not-prose my-3 border-l-2 border-[#4f7dff] pl-4 text-sm text-white/60 italic">
+                  {children}
+                </blockquote>
+              );
+            },
+          }}
+        >
+          {content}
+        </ReactMarkdown>
+      )}
     </div>
   );
 }

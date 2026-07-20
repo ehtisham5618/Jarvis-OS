@@ -15,13 +15,20 @@ import { registerAuthHandlers } from "../auth/AuthService";
 import { registerAuditHandlers } from "../auth/AuditService";
 
 /**
- * Register all IPC handlers in one place.
- * Called once from main.ts after the app is ready.
+ * Register critical IPC handlers needed immediately for startup.
  */
-export function registerAllHandlers(): void {
+export function registerCriticalHandlers(): void {
   registerSystemHandlers();
   registerFsHandlers();
   registerShellHandlers();
+  registerAuthHandlers();
+  registerAuditHandlers();
+}
+
+/**
+ * Register non-critical IPC handlers after the window is shown.
+ */
+export function registerDeferredHandlers(): void {
   registerClipboardHandlers();
   registerNotificationHandlers();
   registerDialogHandlers();
@@ -32,6 +39,4 @@ export function registerAllHandlers(): void {
   registerVisionHandlers();
   registerAutomationHandlers();
   registerPluginHandlers();
-  registerAuthHandlers();
-  registerAuditHandlers();
 }

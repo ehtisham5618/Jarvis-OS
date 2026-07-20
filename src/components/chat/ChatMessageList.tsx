@@ -6,8 +6,9 @@
  * Empty state when no messages exist.
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useLayoutEffect } from "react";
 import { Sparkles, ArrowDown } from "lucide-react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChatBubble } from "./ChatBubble";
 import type { ChatMessage } from "@/services/interfaces/IAIService";
 
@@ -33,45 +34,54 @@ function EmptyState() {
 }
 
 export function ChatMessageList({ messages, isStreaming }: ChatMessageListProps) {
-  const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const isUserScrolledUp = useRef(false);
+
+  const virtualizer = useVirtualizer({
+    count: messages.length,
+    getScrollElement: () => containerRef.current,
+    estimateSize: () => 100, // Roughly 100px per message initially
+    overscan: 5, // Render 5 items outside viewport
+  });
+
+  // Keep measuring the last item while it's streaming so virtualization adjusts
+  const lastMessage = messages[messages.length - 1];
+  const isLastStreaming = isStreaming && lastMessage?.role === "assistant";
+  
+  useEffect(() => {
+    if (isLastStreaming) {
+      virtualizer.measure();
+    }
+  }, [lastMessage?.content, isLastStreaming, virtualizer]);
 
   // Detect if user manually scrolled up
   const handleScroll = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
     const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    isUserScrolledUp.current = distFromBottom > 100;
-    setShowScrollButton(distFromBottom > 100);
+    isUserScrolledUp.current = distFromBottom > 150;
+    setShowScrollButton(distFromBottom > 150);
   }, []);
 
-  // Auto-scroll during streaming unless user scrolled up
+  // Auto-scroll during streaming or when new messages arrive
   useEffect(() => {
-    if (!isUserScrolledUp.current) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!isUserScrolledUp.current && messages.length > 0) {
+      virtualizer.scrollToIndex(messages.length - 1, { align: "end", behavior: "auto" });
     }
-  }, [messages]);
-
-  // Always scroll to bottom when a new user message is added
-  useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-    if (lastMessage?.role === "user") {
-      isUserScrolledUp.current = false;
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [messages.length, lastMessage?.content, virtualizer]);
 
   const scrollToBottom = () => {
     isUserScrolledUp.current = false;
     setShowScrollButton(false);
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    virtualizer.scrollToIndex(messages.length - 1, { align: "end", behavior: "smooth" });
   };
 
   if (messages.length === 0) {
     return <EmptyState />;
   }
+
+  const virtualItems = virtualizer.getVirtualItems();
 
   return (
     <div className="relative flex-1 overflow-hidden">
@@ -81,19 +91,32 @@ export function ChatMessageList({ messages, isStreaming }: ChatMessageListProps)
         className="h-full overflow-y-auto px-6 py-6"
         style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}
       >
-        <div className="mx-auto max-w-3xl space-y-6">
-          {messages.map((message, idx) => {
-            const isLastMessage = idx === messages.length - 1;
-            const isLastStreaming = isLastMessage && isStreaming && message.role === "assistant";
+        <div 
+          className="mx-auto max-w-3xl relative"
+          style={{ height: `${virtualizer.getTotalSize()}px` }}
+        >
+          {virtualItems.map((virtualItem) => {
+            const message = messages[virtualItem.index];
+            const isLast = virtualItem.index === messages.length - 1;
+            const streaming = isLast && isStreaming && message.role === "assistant";
+            
             return (
-              <ChatBubble
-                key={message.id}
-                message={message}
-                isStreaming={isLastStreaming}
-              />
+              <div
+                key={virtualItem.key}
+                data-index={virtualItem.index}
+                ref={virtualizer.measureElement}
+                className="absolute top-0 left-0 w-full"
+                style={{ transform: `translateY(${virtualItem.start}px)` }}
+              >
+                <div className="pb-6">
+                  <ChatBubble
+                    message={message}
+                    isStreaming={streaming}
+                  />
+                </div>
+              </div>
             );
           })}
-          <div ref={bottomRef} className="h-1" />
         </div>
       </div>
 

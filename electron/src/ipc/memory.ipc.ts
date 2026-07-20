@@ -97,4 +97,28 @@ export function registerMemoryHandlers(): void {
       await db.dropTable("memories");
     }
   });
+
+  // ─── PERIODIC CLEANUP (M11) ──────────────────────────────────────────────
+  setInterval(async () => {
+    try {
+      const table = await getTable();
+      if (!table) return;
+      
+      const allRows = await table.query().execute();
+      if (allRows.length > 10000) {
+        // Sort by oldest first
+        const sorted = allRows.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        const toDelete = sorted.slice(0, allRows.length - 10000);
+        
+        // Archive to flat file
+        const archivePath = path.join(app.getPath("userData"), "memory", "archive.jsonl");
+        for (const row of toDelete) {
+          fs.appendFileSync(archivePath, JSON.stringify(row) + "\n");
+          await table.delete(`id = '${(row as any).id}'`);
+        }
+      }
+    } catch (err) {
+      console.error("[Memory IPC] Periodic cleanup failed:", err);
+    }
+  }, 60 * 60 * 1000); // Check every hour
 }

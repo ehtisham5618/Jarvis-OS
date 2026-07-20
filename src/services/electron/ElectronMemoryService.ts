@@ -10,6 +10,7 @@ import type { IMemoryService, MemoryEntry } from "@/services/interfaces/IMemoryS
 import { serviceRegistry, ServiceToken } from "@/core/service-registry";
 import type { IAIService } from "@/services/interfaces/IAIService";
 import { Logger } from "@/core/logger";
+import MemorySearchWorker from "@/workers/memorySearch.worker?worker";
 
 const log = Logger.for("memory:electron");
 
@@ -46,8 +47,26 @@ export class ElectronMemoryService implements IMemoryService {
     if (!this.api) throw new Error("Memory IPC not available.");
 
     log.debug(`Searching memory for: "${query}"`);
-    const queryVector = await this.ai.embed(query, "nomic-embed-text");
-    return this.api.search(Array.from(queryVector), topK);
+    
+    // Offload embedding calculation to a Web Worker (M11)
+    const embeddingVector: number[] = await new Promise((resolve, reject) => {
+      const worker = new MemorySearchWorker();
+      worker.onmessage = (e) => {
+        worker.terminate();
+        if (e.data.success) {
+          resolve(e.data.embedding);
+        } else {
+          reject(new Error(e.data.error));
+        }
+      };
+      worker.onerror = (err) => {
+        worker.terminate();
+        reject(err);
+      };
+      worker.postMessage({ query, model: "nomic-embed-text" });
+    });
+
+    return this.api.search(embeddingVector, topK);
   }
 
   async list(limit: number = 50): Promise<MemoryEntry[]> {

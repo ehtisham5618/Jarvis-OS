@@ -136,7 +136,13 @@ function RootComponent() {
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    initializeJarvis().then(() => setInitialized(true));
+    performance.mark("T2");
+    console.log(`[renderer] T2: First paint at ${performance.now().toFixed(2)}ms`);
+    initializeJarvis().then(() => {
+      performance.mark("T3");
+      console.log(`[renderer] T3: Shell interactive at ${performance.now().toFixed(2)}ms`);
+      setInitialized(true);
+    });
   }, []);
 
   if (!initialized) {

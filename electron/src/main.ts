@@ -12,7 +12,8 @@ import {
 import * as path from "path";
 import windowStateKeeper from "electron-window-state";
 import log from "electron-log";
-import { registerAllHandlers } from "./ipc/index";
+import * as fs from "fs";
+import { registerCriticalHandlers, registerDeferredHandlers } from "./ipc/index";
 import { IpcChannels } from "./ipc/channels";
 
 // ─── Logger Configuration ──────────────────────────────────────────────────
@@ -20,9 +21,37 @@ log.transports.file.level = "info";
 log.transports.console.level = "debug";
 log.info("Jarvis OS main process starting...");
 
+// ─── GPU & Memory Flags (M11) ──────────────────────────────────────────────
+app.commandLine.appendSwitch("enable-gpu-rasterization");
+app.commandLine.appendSwitch("enable-zero-copy");
+app.commandLine.appendSwitch("ignore-gpu-blocklist");
+app.commandLine.appendSwitch("max-old-space-size", "512");
+
 // ─── Dev Mode Detection ────────────────────────────────────────────────────
 const isDev = !app.isPackaged;
 const DEV_SERVER_URL = "http://localhost:8080";
+
+// ─── Log Cleanup (M11) ─────────────────────────────────────────────────────
+function cleanOldLogs() {
+  try {
+    const logPath = path.dirname(log.transports.file.getFile().path);
+    const files = fs.readdirSync(logPath);
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    
+    files.forEach(file => {
+      if (file.endsWith(".log")) {
+        const filePath = path.join(logPath, file);
+        const stats = fs.statSync(filePath);
+        if (stats.mtimeMs < thirtyDaysAgo) {
+          fs.unlinkSync(filePath);
+          log.info(`[main] Deleted old log file: ${file}`);
+        }
+      }
+    });
+  } catch (err) {
+    log.error("[main] Failed to clean old logs:", err);
+  }
+}
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -80,7 +109,12 @@ function createWindow(): void {
   // Show window after it's ready to avoid visual flash
   mainWindow.once("ready-to-show", () => {
     mainWindow?.show();
-    log.info("[main] Window shown");
+    log.info(`[main] T1: Window shown at ${performance.now().toFixed(2)}ms`);
+    
+    // Register non-critical handlers and plugins (M11)
+    setTimeout(() => {
+      registerDeferredHandlers();
+    }, 100);
   });
 
   // Minimize to tray on close (don't quit)
@@ -239,10 +273,12 @@ function applyContentSecurityPolicy(): void {
 app.setAppUserModelId("com.jarvis-os.app");
 
 app.whenReady().then(() => {
-  log.info("[main] App ready");
+  log.info(`[main] T0: App ready at ${performance.now().toFixed(2)}ms`);
 
-  // Register all IPC handlers before creating the window
-  registerAllHandlers();
+  cleanOldLogs();
+
+  // Register only critical IPC handlers before creating the window
+  registerCriticalHandlers();
   registerAppControls();
   applyContentSecurityPolicy();
 

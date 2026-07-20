@@ -5,6 +5,7 @@
  * or an assistant response (left-aligned with Markdown + streaming indicator).
  */
 
+import { memo } from "react";
 import { Sparkles } from "lucide-react";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import type { ChatMessage } from "@/services/interfaces/IAIService";
@@ -25,7 +26,7 @@ function TypingIndicator() {
   );
 }
 
-function UserBubble({ message }: { message: ChatMessage }) {
+const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage }) {
   const { profile } = useUserStore();
   const initials = profile?.preferredName
     ? profile.preferredName.slice(0, 2).toUpperCase()
@@ -47,9 +48,9 @@ function UserBubble({ message }: { message: ChatMessage }) {
       </div>
     </div>
   );
-}
+});
 
-function AssistantBubble({ message, isStreaming }: { message: ChatMessage; isStreaming?: boolean }) {
+const AssistantBubble = memo(function AssistantBubble({ message, isStreaming }: { message: ChatMessage; isStreaming?: boolean }) {
   const showTyping = isStreaming && message.content === "";
   const showContent = message.content.length > 0;
 
@@ -97,11 +98,11 @@ function AssistantBubble({ message, isStreaming }: { message: ChatMessage; isStr
       </div>
     </div>
   );
-}
+});
 
-export function ChatBubble({ message, isStreaming }: ChatBubbleProps) {
+export const ChatBubble = memo(function ChatBubble({ message, isStreaming }: ChatBubbleProps) {
   if (message.role === "user") {
     return <UserBubble message={message} />;
   }
   return <AssistantBubble message={message} isStreaming={isStreaming} />;
-}
+});
