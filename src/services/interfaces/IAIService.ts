@@ -19,6 +19,8 @@ export interface ChatMessage {
   tokenCount?: number;
   /** Latency to first token in ms */
   latencyMs?: number;
+  /** Model Router decision reason (dev-mode only) */
+  routerDecision?: string;
 }
 
 export interface ChatThread {

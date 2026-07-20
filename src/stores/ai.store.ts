@@ -10,6 +10,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ChatThread, ChatMessage, IAIService } from "@/services/interfaces/IAIService";
 import { serviceRegistry, ServiceToken } from "@/core/service-registry";
+import { detectIntent } from "@/core/model-router/IntentDetector";
+import { selectModel } from "@/core/model-router/ModelRouter";
 import { Logger } from "@/core/logger";
 
 const log = Logger.for("ai.store");
@@ -166,6 +168,24 @@ export const useAIStore = create<AIState>()(
           get().renameThread(activeThreadId, autoTitle);
         }
 
+        // ── Model Router: auto-select best model for this message ──────────────
+        let routerDecision: string | undefined;
+        try {
+          const { useModelsStore } = await import("@/stores/models.store");
+          const { models, autoRoute } = useModelsStore.getState();
+          if (autoRoute && models.length > 0) {
+            const intent = detectIntent(content);
+            const decision = selectModel(intent, models);
+            if (decision && decision.model.id !== activeModel) {
+              activeModel = decision.model.id;
+              routerDecision = decision.reason;
+              log.info(`[model-router] Switched to "${activeModel}" — ${decision.reason}`);
+            }
+          }
+        } catch (err) {
+          log.warn("Model router failed, using activeModel", { error: err });
+        }
+
         const userMessage: ChatMessage = {
           id: crypto.randomUUID(),
           role: "user",
@@ -180,6 +200,8 @@ export const useAIStore = create<AIState>()(
           content: "",
           model: activeModel,
           timestamp: new Date().toISOString(),
+          // Attach router decision for dev-mode display
+          ...(routerDecision ? { routerDecision } : {}),
         };
 
         // Optimistic update
