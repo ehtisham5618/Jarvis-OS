@@ -88,6 +88,19 @@ export const IpcChannels = {
   PLUGIN_DISABLE:        "plugin:disable",
   PLUGIN_CALL:           "plugin:call",
 
+  // ─── Auth (M10) ───────────────────────────────────────
+  AUTH_LOCK:             "auth:lock",
+  AUTH_UNLOCK_PIN:       "auth:unlock-pin",
+  AUTH_UNLOCK_HELLO:     "auth:unlock-hello",
+  AUTH_SET_PIN:          "auth:set-pin",
+  AUTH_STATUS:           "auth:status",
+
+  // ─── Audit (M10) ──────────────────────────────────────
+  AUDIT_LOG:             "audit:log",
+  AUDIT_QUERY:           "audit:query",
+  AUDIT_CLEAR:           "audit:clear",
+  AUDIT_EXPORT:          "audit:export",
+
   // ─── Tray ─────────────────────────────────────────────
   TRAY_UPDATE_TOOLTIP:   "tray:update-tooltip",
 } as const;

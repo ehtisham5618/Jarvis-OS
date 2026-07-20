@@ -128,6 +128,31 @@ const jarvisOS = {
     disable:   (id: string)   => ipcRenderer.invoke(IpcChannels.PLUGIN_DISABLE, id),
     call:      (id: string, method: string, args: any[]) => ipcRenderer.invoke(IpcChannels.PLUGIN_CALL, id, method, args),
   },
+
+  // ─── Auth (M10) ────────────────────────────────────────────────────────────
+  auth: {
+    lock:        ()                  => ipcRenderer.invoke(IpcChannels.AUTH_LOCK),
+    unlockPin:   (pin: string)       => ipcRenderer.invoke(IpcChannels.AUTH_UNLOCK_PIN, pin),
+    unlockHello: ()                  => ipcRenderer.invoke(IpcChannels.AUTH_UNLOCK_HELLO),
+    setPin:      (hash: string)      => ipcRenderer.invoke(IpcChannels.AUTH_SET_PIN, hash),
+    status:      ()                  => ipcRenderer.invoke(IpcChannels.AUTH_STATUS),
+    onLocked:    (cb: () => void)    => {
+      ipcRenderer.on("auth:locked", cb);
+      return () => ipcRenderer.removeListener("auth:locked", cb);
+    },
+    onUnlocked:  (cb: () => void)    => {
+      ipcRenderer.on("auth:unlocked", cb);
+      return () => ipcRenderer.removeListener("auth:unlocked", cb);
+    },
+  },
+
+  // ─── Audit (M10) ───────────────────────────────────────────────────────────
+  audit: {
+    log:    (entry: any)    => ipcRenderer.invoke(IpcChannels.AUDIT_LOG, entry),
+    query:  (filters: any)  => ipcRenderer.invoke(IpcChannels.AUDIT_QUERY, filters),
+    clear:  ()              => ipcRenderer.invoke(IpcChannels.AUDIT_CLEAR),
+    export: ()              => ipcRenderer.invoke(IpcChannels.AUDIT_EXPORT),
+  },
 };
 
 contextBridge.exposeInMainWorld("jarvisOS", jarvisOS);

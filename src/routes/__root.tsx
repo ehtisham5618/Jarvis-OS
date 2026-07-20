@@ -12,6 +12,8 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { initializeJarvis } from "@/core/init";
+import { LockScreen } from "@/components/auth/LockScreen";
+import { useSettingsStore } from "@/stores/settings.store";
 
 function NotFoundComponent() {
   return (
@@ -151,6 +153,8 @@ function RootComponent() {
   }
 
   const navigate = useNavigate();
+  const { security } = useSettingsStore();
+  const [locked, setLocked] = useState(false);
 
   // Handle Voice Hotkey
   useEffect(() => {
@@ -161,9 +165,41 @@ function RootComponent() {
     }
   }, [navigate]);
 
+  // Listen for lock/unlock events from main process
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.jarvisOS?.auth) {
+      const unsubLock   = window.jarvisOS.auth.onLocked(()   => setLocked(true));
+      const unsubUnlock = window.jarvisOS.auth.onUnlocked(() => setLocked(false));
+      // Check initial lock status
+      window.jarvisOS.auth.status().then((s: any) => { if (s?.locked) setLocked(true); });
+      return () => { unsubLock?.(); unsubUnlock?.(); };
+    }
+  }, []);
+
+  // Privacy mode hotkey Ctrl+Shift+P
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === "P") {
+        e.preventDefault();
+        useSettingsStore.getState().setPrivacyMode(!useSettingsStore.getState().security.privacyMode);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Privacy mode banner */}
+      {security.privacyMode && (
+        <div className="fixed top-0 left-0 right-0 z-[9990] flex items-center justify-between px-8 py-2 text-xs font-medium" style={{ background: "rgba(251,191,36,0.12)", borderBottom: "1px solid rgba(251,191,36,0.2)" }}>
+          <span className="flex items-center gap-2 text-amber-400"><span className="size-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_#fbbf24]" /> Privacy Mode Active — AI requests stay local only</span>
+          <button onClick={() => useSettingsStore.getState().setPrivacyMode(false)} className="text-amber-400/60 hover:text-amber-400">Disable</button>
+        </div>
+      )}
       <Outlet />
+      {/* Lock screen overlay */}
+      {locked && <LockScreen onUnlocked={() => setLocked(false)} />}
     </QueryClientProvider>
   );
 }

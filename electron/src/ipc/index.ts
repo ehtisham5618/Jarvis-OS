@@ -11,6 +11,8 @@ import { registerTtsHandlers } from "./tts.ipc";
 import { registerVisionHandlers } from "./vision.ipc";
 import { registerAutomationHandlers } from "../automation/AutomationEngine";
 import { registerPluginHandlers } from "../plugins/PluginLoader";
+import { registerAuthHandlers } from "../auth/AuthService";
+import { registerAuditHandlers } from "../auth/AuditService";
 
 /**
  * Register all IPC handlers in one place.
@@ -30,4 +32,6 @@ export function registerAllHandlers(): void {
   registerVisionHandlers();
   registerAutomationHandlers();
   registerPluginHandlers();
+  registerAuthHandlers();
+  registerAuditHandlers();
 }
