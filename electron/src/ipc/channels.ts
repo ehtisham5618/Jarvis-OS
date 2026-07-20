@@ -10,11 +10,34 @@ export const IpcChannels = {
   // ─── System ──────────────────────────────────────────
   SYSTEM_GET_METRICS:    "system:get-metrics",
   SYSTEM_GET_PROCESSES:  "system:get-processes",
+  SYSTEM_POWER_STATUS:   "system:power-status",
 
   // ─── File System ─────────────────────────────────────
   FS_READ_FILE:          "fs:read-file",
   FS_WRITE_FILE:         "fs:write-file",
   FS_LIST_DIR:           "fs:list-dir",
+
+  // ─── Shell ────────────────────────────────────────────
+  SHELL_EXEC:            "shell:exec",
+  SHELL_OPEN:            "shell:open",
+
+  // ─── Clipboard ───────────────────────────────────────
+  CLIPBOARD_READ:        "clipboard:read",
+  CLIPBOARD_WRITE:       "clipboard:write",
+
+  // ─── Notifications ───────────────────────────────────
+  NOTIFICATION_SHOW:     "notification:show",
+
+  // ─── Dialog ──────────────────────────────────────────
+  DIALOG_OPEN_FILE:      "dialog:open-file",
+  DIALOG_OPEN_DIR:       "dialog:open-dir",
+  DIALOG_SAVE_FILE:      "dialog:save-file",
+
+  // ─── Process ─────────────────────────────────────────
+  PROCESS_KILL:          "process:kill",
+
+  // ─── Env ─────────────────────────────────────────────
+  ENV_GET:               "env:get",
 
   // ─── Application ─────────────────────────────────────
   APP_GET_VERSION:       "app:get-version",

@@ -2,7 +2,9 @@ import { serviceRegistry, ServiceToken } from "./service-registry";
 import { MockSystemService } from "@/services/mock/MockSystemService";
 import { MockAIService } from "@/services/mock/MockAIService";
 import { MockModelService } from "@/services/mock/MockModelService";
+import { MockWindowsService } from "@/services/mock/MockWindowsService";
 import { ElectronSystemService } from "@/services/electron/ElectronSystemService";
+import { ElectronWindowsService } from "@/services/electron/ElectronWindowsService";
 import { OllamaService } from "@/services/ollama/OllamaService";
 import { Logger } from "./logger";
 
@@ -30,10 +32,12 @@ export async function initializeJarvis(): Promise<void> {
     // Real Windows hardware data via IPC bridge
     log.info("Electron detected — wiring native system service.");
     serviceRegistry.register(ServiceToken.System, new ElectronSystemService());
+    serviceRegistry.register(ServiceToken.Windows, new ElectronWindowsService());
   } else {
     // Browser dev mode — realistic simulation
     log.warn("Browser context — wiring mock system service.");
     serviceRegistry.register(ServiceToken.System, new MockSystemService());
+    serviceRegistry.register(ServiceToken.Windows, new MockWindowsService());
   }
 
   // ─── 2. Model Service ───────────────────────────────────────────────────

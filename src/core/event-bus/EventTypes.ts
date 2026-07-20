@@ -12,7 +12,7 @@
 import type { SystemMetrics } from "@/services/interfaces/ISystemService";
 import type { ModelRecord } from "@/services/interfaces/IModelService";
 import type { ChatMessage } from "@/services/interfaces/IAIService";
-import type { Notification } from "@/stores/notifications.store";
+import type { JarvisNotification } from "@/stores/notifications.store";
 
 /**
  * Master event map.

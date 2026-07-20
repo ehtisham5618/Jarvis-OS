@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VoiceRouteImport } from './routes/voice'
+import { Route as TerminalRouteImport } from './routes/terminal'
 import { Route as SystemRouteImport } from './routes/system'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -18,6 +19,7 @@ import { Route as ModelsRouteImport } from './routes/models'
 import { Route as MemoryRouteImport } from './routes/memory'
 import { Route as LockRouteImport } from './routes/lock'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as FilesRouteImport } from './routes/files'
 import { Route as DownloadsRouteImport } from './routes/downloads'
 import { Route as DevicesRouteImport } from './routes/devices'
 import { Route as DeveloperRouteImport } from './routes/developer'
@@ -32,6 +34,11 @@ import { Route as SetupAiRouteImport } from './routes/setup.ai'
 const VoiceRoute = VoiceRouteImport.update({
   id: '/voice',
   path: '/voice',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TerminalRoute = TerminalRouteImport.update({
+  id: '/terminal',
+  path: '/terminal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SystemRoute = SystemRouteImport.update({
@@ -72,6 +79,11 @@ const LockRoute = LockRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FilesRoute = FilesRouteImport.update({
+  id: '/files',
+  path: '/files',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DownloadsRoute = DownloadsRouteImport.update({
@@ -132,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/developer': typeof DeveloperRoute
   '/devices': typeof DevicesRoute
   '/downloads': typeof DownloadsRoute
+  '/files': typeof FilesRoute
   '/history': typeof HistoryRoute
   '/lock': typeof LockRoute
   '/memory': typeof MemoryRoute
@@ -140,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRouteWithChildren
   '/system': typeof SystemRoute
+  '/terminal': typeof TerminalRoute
   '/voice': typeof VoiceRoute
   '/setup/ai': typeof SetupAiRoute
   '/setup/complete': typeof SetupCompleteRoute
@@ -153,6 +167,7 @@ export interface FileRoutesByTo {
   '/developer': typeof DeveloperRoute
   '/devices': typeof DevicesRoute
   '/downloads': typeof DownloadsRoute
+  '/files': typeof FilesRoute
   '/history': typeof HistoryRoute
   '/lock': typeof LockRoute
   '/memory': typeof MemoryRoute
@@ -160,6 +175,7 @@ export interface FileRoutesByTo {
   '/projects': typeof ProjectsRoute
   '/settings': typeof SettingsRoute
   '/system': typeof SystemRoute
+  '/terminal': typeof TerminalRoute
   '/voice': typeof VoiceRoute
   '/setup/ai': typeof SetupAiRoute
   '/setup/complete': typeof SetupCompleteRoute
@@ -174,6 +190,7 @@ export interface FileRoutesById {
   '/developer': typeof DeveloperRoute
   '/devices': typeof DevicesRoute
   '/downloads': typeof DownloadsRoute
+  '/files': typeof FilesRoute
   '/history': typeof HistoryRoute
   '/lock': typeof LockRoute
   '/memory': typeof MemoryRoute
@@ -182,6 +199,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRouteWithChildren
   '/system': typeof SystemRoute
+  '/terminal': typeof TerminalRoute
   '/voice': typeof VoiceRoute
   '/setup/ai': typeof SetupAiRoute
   '/setup/complete': typeof SetupCompleteRoute
@@ -197,6 +215,7 @@ export interface FileRouteTypes {
     | '/developer'
     | '/devices'
     | '/downloads'
+    | '/files'
     | '/history'
     | '/lock'
     | '/memory'
@@ -205,6 +224,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/setup'
     | '/system'
+    | '/terminal'
     | '/voice'
     | '/setup/ai'
     | '/setup/complete'
@@ -218,6 +238,7 @@ export interface FileRouteTypes {
     | '/developer'
     | '/devices'
     | '/downloads'
+    | '/files'
     | '/history'
     | '/lock'
     | '/memory'
@@ -225,6 +246,7 @@ export interface FileRouteTypes {
     | '/projects'
     | '/settings'
     | '/system'
+    | '/terminal'
     | '/voice'
     | '/setup/ai'
     | '/setup/complete'
@@ -238,6 +260,7 @@ export interface FileRouteTypes {
     | '/developer'
     | '/devices'
     | '/downloads'
+    | '/files'
     | '/history'
     | '/lock'
     | '/memory'
@@ -246,6 +269,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/setup'
     | '/system'
+    | '/terminal'
     | '/voice'
     | '/setup/ai'
     | '/setup/complete'
@@ -260,6 +284,7 @@ export interface RootRouteChildren {
   DeveloperRoute: typeof DeveloperRoute
   DevicesRoute: typeof DevicesRoute
   DownloadsRoute: typeof DownloadsRoute
+  FilesRoute: typeof FilesRoute
   HistoryRoute: typeof HistoryRoute
   LockRoute: typeof LockRoute
   MemoryRoute: typeof MemoryRoute
@@ -268,6 +293,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SetupRoute: typeof SetupRouteWithChildren
   SystemRoute: typeof SystemRoute
+  TerminalRoute: typeof TerminalRoute
   VoiceRoute: typeof VoiceRoute
 }
 
@@ -278,6 +304,13 @@ declare module '@tanstack/react-router' {
       path: '/voice'
       fullPath: '/voice'
       preLoaderRoute: typeof VoiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terminal': {
+      id: '/terminal'
+      path: '/terminal'
+      fullPath: '/terminal'
+      preLoaderRoute: typeof TerminalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/system': {
@@ -334,6 +367,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/files': {
+      id: '/files'
+      path: '/files'
+      fullPath: '/files'
+      preLoaderRoute: typeof FilesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/downloads': {
@@ -432,6 +472,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeveloperRoute: DeveloperRoute,
   DevicesRoute: DevicesRoute,
   DownloadsRoute: DownloadsRoute,
+  FilesRoute: FilesRoute,
   HistoryRoute: HistoryRoute,
   LockRoute: LockRoute,
   MemoryRoute: MemoryRoute,
@@ -440,6 +481,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SetupRoute: SetupRouteWithChildren,
   SystemRoute: SystemRoute,
+  TerminalRoute: TerminalRoute,
   VoiceRoute: VoiceRoute,
 }
 export const routeTree = rootRouteImport
