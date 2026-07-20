@@ -39,6 +39,13 @@ export const IpcChannels = {
   // ─── Env ─────────────────────────────────────────────
   ENV_GET:               "env:get",
 
+  // ─── Memory (M5) ─────────────────────────────────────
+  MEMORY_STORE:          "memory:store",
+  MEMORY_SEARCH:         "memory:search",
+  MEMORY_LIST:           "memory:list",
+  MEMORY_DELETE:         "memory:delete",
+  MEMORY_CLEAR:          "memory:clear",
+
   // ─── Application ─────────────────────────────────────
   APP_GET_VERSION:       "app:get-version",
   APP_QUIT:              "app:quit",

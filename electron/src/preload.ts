@@ -62,6 +62,15 @@ const jarvisOS = {
     getEnv: (key: string)   => ipcRenderer.invoke(IpcChannels.ENV_GET, key),
   },
 
+  // ─── Memory (M5) ───────────────────────────────────────────────────────────
+  memory: {
+    store:  (entry: any)                    => ipcRenderer.invoke(IpcChannels.MEMORY_STORE, entry),
+    search: (queryVector: number[], topK?: number) => ipcRenderer.invoke(IpcChannels.MEMORY_SEARCH, queryVector, topK),
+    list:   (limit?: number)                => ipcRenderer.invoke(IpcChannels.MEMORY_LIST, limit),
+    delete: (id: string)                    => ipcRenderer.invoke(IpcChannels.MEMORY_DELETE, id),
+    clear:  ()                              => ipcRenderer.invoke(IpcChannels.MEMORY_CLEAR),
+  },
+
   // ─── Application ───────────────────────────────────────────────────────────
   app: {
     getVersion: ()          => ipcRenderer.invoke(IpcChannels.APP_GET_VERSION),

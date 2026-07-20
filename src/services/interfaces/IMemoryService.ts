@@ -1,67 +1,47 @@
 /**
- * IMemoryService — Memory Engine Contract
- *
- * Manages the semantic memory of Jarvis.
- * Items can be files, conversations, URLs, screenshots, etc.
+ * IMemoryService — Persistent Vector Memory Contract
  */
 
-export type MemoryItemType =
-  | "file"
-  | "conversation"
-  | "command"
-  | "clipboard"
-  | "screenshot"
-  | "url"
-  | "note";
-
-export interface MemoryItem {
+export interface MemoryEntry {
   id: string;
-  type: MemoryItemType;
-  title: string;
-  contentSnippet: string;
-  timestamp: string;
-  source: string; // e.g., filepath, url, app name
+  content: string;
+  source: "conversation" | "file" | "web" | "manual";
+  threadId?: string;
   tags: string[];
-  /** Vector embedding of the content (useful in Phase 2) */
-  embedding?: Float32Array;
-  metadata?: Record<string, unknown>;
-}
-
-export interface MemorySearchQuery {
-  text: string;
-  types?: MemoryItemType[];
-  limit?: number;
-  timeRange?: {
-    start: string;
-    end: string;
-  };
-}
-
-export interface MemorySearchResult {
-  item: MemoryItem;
-  score: number; // Relevance score (0.0 - 1.0)
+  embedding?: number[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface IMemoryService {
-  /** Add a new item to memory */
-  addItem(item: Omit<MemoryItem, "id" | "timestamp" | "embedding">): Promise<MemoryItem>;
-
-  /** Retrieve an item by ID */
-  getItem(id: string): Promise<MemoryItem | undefined>;
-
-  /** Delete an item from memory */
-  deleteItem(id: string): Promise<void>;
+  /**
+   * Embeds the text and stores it in the vector DB.
+   * Returns the generated UUID.
+   */
+  store(entry: Omit<MemoryEntry, "id" | "embedding" | "createdAt" | "updatedAt">): Promise<string>;
 
   /**
-   * Search memory using natural language.
-   * Phase 1: fuzzy text search.
-   * Phase 2: semantic vector search.
+   * Search for semantically similar memories using Ollama embeddings.
    */
-  search(query: MemorySearchQuery): Promise<MemorySearchResult[]>;
+  search(query: string, topK?: number): Promise<MemoryEntry[]>;
 
-  /** Get a chronological timeline of recent memory items */
-  getTimeline(limit?: number): Promise<MemoryItem[]>;
+  /**
+   * List recent memories chronologically.
+   */
+  list(limit?: number): Promise<MemoryEntry[]>;
 
-  /** Get basic stats (total items, breakdown by type) */
-  getStats(): Promise<{ total: number; byType: Record<string, number> }>;
+  /**
+   * Delete a specific memory by ID.
+   */
+  delete(id: string): Promise<void>;
+
+  /**
+   * Completely wipe the memory database.
+   */
+  clear(): Promise<void>;
+
+  /**
+   * Returns true if LanceDB and Ollama embeddings are accessible.
+   */
+  isAvailable(): Promise<boolean>;
 }

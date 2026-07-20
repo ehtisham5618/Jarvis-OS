@@ -8,11 +8,50 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ChatThread, ChatMessage } from "@/services/interfaces/IAIService";
+import type { ChatThread, ChatMessage, IAIService } from "@/services/interfaces/IAIService";
 import { serviceRegistry, ServiceToken } from "@/core/service-registry";
 import { Logger } from "@/core/logger";
 
 const log = Logger.for("ai.store");
+
+async function triggerBackgroundSummarization(threadId: string) {
+  const store = useAIStore.getState();
+  const thread = store.threads[threadId];
+  if (!thread || thread.messages.length < 4) return;
+  
+  // Get last 4 messages
+  const recent = thread.messages.slice(-4).map(m => `${m.role}: ${m.content}`).join("\n");
+  const aiService = serviceRegistry.resolve<IAIService>(ServiceToken.AI);
+  const memService = serviceRegistry.resolve<any>(ServiceToken.Memory);
+
+  try {
+    if (!(await memService.isAvailable())) return;
+
+    const summaryPrompt = `Summarize the following conversation snippet in one concise sentence to serve as a long-term memory for an AI assistant. Focus on facts, preferences, or project details. Do not use conversational filler, just give the fact.\n\n${recent}`;
+    
+    let summary = "";
+    const stream = aiService.chat(
+      { id: "sum", messages: [{ id: "1", role: "user", content: summaryPrompt, timestamp: "" }], createdAt: "", updatedAt: "" },
+      { model: store.activeModel }
+    );
+    
+    for await (const chunk of stream) {
+      summary += chunk.token;
+    }
+    
+    if (summary.trim()) {
+      await memService.store({
+        content: summary.trim(),
+        source: "conversation",
+        threadId,
+        tags: ["auto-summary"]
+      });
+      log.info(`Background memory saved for thread ${threadId}`);
+    }
+  } catch (err) {
+    log.error("Background summarization failed", { error: err });
+  }
+}
 
 interface AIState {
   threads: Record<string, ChatThread>;
@@ -167,6 +206,26 @@ export const useAIStore = create<AIState>()(
           const updatedThread = get().threads[activeThreadId!]!;
           const messagesForContext = updatedThread.messages.slice(0, -1); // exclude the empty assistant message
 
+          // Memory Context Injection
+          try {
+            const memService = serviceRegistry.resolve<any>(ServiceToken.Memory);
+            if (await memService.isAvailable()) {
+              const memories = await memService.search(content, 3);
+              if (memories.length > 0) {
+                const contextBlock = `[Relevant Memory Context]:\n` + memories.map((m: any) => `- ${m.content}`).join("\n");
+                const firstMsg = messagesForContext[0];
+                if (firstMsg.role === "system") {
+                  messagesForContext[0] = { ...firstMsg, content: firstMsg.content + "\n\n" + contextBlock };
+                } else {
+                  messagesForContext.unshift({ id: "sys", role: "system", content: contextBlock, timestamp: new Date().toISOString() });
+                }
+                log.info("Injected memory context into prompt.");
+              }
+            }
+          } catch (err) {
+            log.warn("Memory context injection failed", { error: err });
+          }
+
           const stream = aiService.chat(
             { ...thread, messages: messagesForContext },
             { model: activeModel },
@@ -212,6 +271,10 @@ export const useAIStore = create<AIState>()(
         } finally {
           currentAbortController = null;
           set({ isStreaming: false });
+          // Trigger summarization safely in background
+          if (activeThreadId) {
+             triggerBackgroundSummarization(activeThreadId).catch(console.error);
+          }
         }
       },
     }),

@@ -5,6 +5,7 @@ import { registerClipboardHandlers } from "./clipboard.ipc";
 import { registerNotificationHandlers } from "./notification.ipc";
 import { registerDialogHandlers } from "./dialog.ipc";
 import { registerProcessHandlers } from "./process.ipc";
+import { registerMemoryHandlers } from "./memory.ipc";
 
 /**
  * Register all IPC handlers in one place.
@@ -18,4 +19,5 @@ export function registerAllHandlers(): void {
   registerNotificationHandlers();
   registerDialogHandlers();
   registerProcessHandlers();
+  registerMemoryHandlers();
 }

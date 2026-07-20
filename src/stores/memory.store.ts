@@ -1,73 +1,104 @@
-import { create } from "zustand";
-import type { MemoryItem } from "@/services/interfaces/IMemoryService";
+/**
+ * memory.store.ts
+ *
+ * Zustand store for managing the memory engine UI state.
+ */
 
-// Mock data for Phase 1
-const mockTimeline: MemoryItem[] = [
-  {
-    id: "1",
-    type: "conversation",
-    title: "Chat about Neural Studio",
-    contentSnippet: "Discussed the new generative UI toolkit architecture.",
-    source: "Jarvis",
-    tags: ["neural-studio", "planning"],
-    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-  },
-  {
-    id: "2",
-    type: "file",
-    title: "Project Aether — v0.4 Architecture",
-    contentSnippet: "Added capability registry and permission engine.",
-    source: "C:/Users/ehtis/Desktop/Jarvis-OS/src/core",
-    tags: ["aether", "code"],
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-  },
-  {
-    id: "3",
-    type: "url",
-    title: "Ollama API Documentation",
-    contentSnippet: "Reference for /api/chat and /api/tags endpoints.",
-    source: "https://github.com/ollama/ollama/blob/main/docs/api.md",
-    tags: ["docs", "ollama"],
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-  },
-];
+import { create } from "zustand";
+import type { MemoryEntry, IMemoryService } from "@/services/interfaces/IMemoryService";
+import { serviceRegistry, ServiceToken } from "@/core/service-registry";
+import { useNotificationsStore } from "./notifications.store";
+import { Logger } from "@/core/logger";
+
+const log = Logger.for("store:memory");
 
 interface MemoryState {
-  timeline: MemoryItem[];
-  isSearching: boolean;
-  
-  fetchTimeline: () => Promise<void>;
-  searchMemory: (query: string) => Promise<void>;
+  entries: MemoryEntry[];
+  isLoading: boolean;
+  lastSearch: { query: string; results: MemoryEntry[] } | null;
+
+  loadRecent(limit?: number): Promise<void>;
+  searchMemory(query: string): Promise<void>;
+  storeMemory(entry: Omit<MemoryEntry, "id" | "embedding" | "createdAt" | "updatedAt">): Promise<void>;
+  deleteMemory(id: string): Promise<void>;
+  clearAllMemory(): Promise<void>;
 }
 
-export const useMemoryStore = create<MemoryState>()((set) => ({
-  timeline: mockTimeline,
-  isSearching: false,
+export const useMemoryStore = create<MemoryState>((set, get) => ({
+  entries: [],
+  isLoading: false,
+  lastSearch: null,
 
-  fetchTimeline: async () => {
-    // In Phase 1, we just use the mock data
-    // In Phase 2, this will call the IMemoryService
-    set({ timeline: mockTimeline });
+  async loadRecent(limit = 50) {
+    set({ isLoading: true });
+    try {
+      const memService = serviceRegistry.resolve<IMemoryService>(ServiceToken.Memory);
+      const isUp = await memService.isAvailable();
+      if (!isUp) {
+        log.warn("Memory service unavailable.");
+        set({ entries: [], isLoading: false });
+        return;
+      }
+      const entries = await memService.list(limit);
+      set({ entries, isLoading: false });
+    } catch (err: any) {
+      log.error("Failed to load recent memories:", err);
+      set({ isLoading: false });
+    }
   },
 
-  searchMemory: async (query: string) => {
-    if (!query) {
-      set({ timeline: mockTimeline });
+  async searchMemory(query) {
+    if (!query.trim()) {
+      set({ lastSearch: null });
       return;
     }
+    set({ isLoading: true });
+    try {
+      const memService = serviceRegistry.resolve<IMemoryService>(ServiceToken.Memory);
+      const results = await memService.search(query);
+      set({ lastSearch: { query, results }, isLoading: false });
+    } catch (err: any) {
+      log.error("Failed to search memory:", err);
+      set({ isLoading: false });
+    }
+  },
 
-    set({ isSearching: true });
-    
-    // Fake latency
-    await new Promise(r => setTimeout(r, 400));
-    
-    const q = query.toLowerCase();
-    const results = mockTimeline.filter(m => 
-      m.title.toLowerCase().includes(q) || 
-      m.contentSnippet.toLowerCase().includes(q) ||
-      m.tags.some(t => t.includes(q))
-    );
-    
-    set({ timeline: results, isSearching: false });
+  async storeMemory(entry) {
+    try {
+      const memService = serviceRegistry.resolve<IMemoryService>(ServiceToken.Memory);
+      await memService.store(entry);
+      // Refresh timeline
+      await get().loadRecent();
+    } catch (err: any) {
+      log.error("Failed to store memory:", err);
+    }
+  },
+
+  async deleteMemory(id) {
+    try {
+      const memService = serviceRegistry.resolve<IMemoryService>(ServiceToken.Memory);
+      await memService.delete(id);
+      
+      // Optimistic UI update
+      set((state) => ({
+        entries: state.entries.filter((e) => e.id !== id),
+        lastSearch: state.lastSearch 
+          ? { ...state.lastSearch, results: state.lastSearch.results.filter(e => e.id !== id) } 
+          : null
+      }));
+    } catch (err: any) {
+      log.error("Failed to delete memory:", err);
+    }
+  },
+
+  async clearAllMemory() {
+    try {
+      const memService = serviceRegistry.resolve<IMemoryService>(ServiceToken.Memory);
+      await memService.clear();
+      set({ entries: [], lastSearch: null });
+      useNotificationsStore.getState().show("Memory Engine", "All semantic memory has been completely erased.", "icon");
+    } catch (err: any) {
+      log.error("Failed to clear memory:", err);
+    }
   },
 }));
