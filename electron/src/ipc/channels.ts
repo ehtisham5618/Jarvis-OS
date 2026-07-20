@@ -72,6 +72,14 @@ export const IpcChannels = {
   APP_TOGGLE:            "app:toggle",
   APP_SHOW:              "app:show",
 
+  // ─── Automation (M8) ─────────────────────────────────
+  AUTOMATION_LIST:       "automation:list",
+  AUTOMATION_CREATE:     "automation:create",
+  AUTOMATION_UPDATE:     "automation:update",
+  AUTOMATION_DELETE:     "automation:delete",
+  AUTOMATION_RUN:        "automation:run",
+  AUTOMATION_TOGGLE:     "automation:toggle",
+
   // ─── Tray ─────────────────────────────────────────────
   TRAY_UPDATE_TOOLTIP:   "tray:update-tooltip",
 } as const;

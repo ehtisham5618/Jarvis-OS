@@ -108,6 +108,16 @@ const jarvisOS = {
     toggle:     ()          => ipcRenderer.send(IpcChannels.APP_TOGGLE),
     show:       ()          => ipcRenderer.send(IpcChannels.APP_SHOW),
   },
+
+  // ─── Automation (M8) ───────────────────────────────────────────────────────
+  automation: {
+    list:   ()                        => ipcRenderer.invoke(IpcChannels.AUTOMATION_LIST),
+    create: (a: any)                  => ipcRenderer.invoke(IpcChannels.AUTOMATION_CREATE, a),
+    update: (id: string, p: any)      => ipcRenderer.invoke(IpcChannels.AUTOMATION_UPDATE, id, p),
+    delete: (id: string)              => ipcRenderer.invoke(IpcChannels.AUTOMATION_DELETE, id),
+    run:    (id: string)              => ipcRenderer.invoke(IpcChannels.AUTOMATION_RUN, id),
+    toggle: (id: string, enabled: boolean) => ipcRenderer.invoke(IpcChannels.AUTOMATION_TOGGLE, id, enabled),
+  },
 };
 
 contextBridge.exposeInMainWorld("jarvisOS", jarvisOS);

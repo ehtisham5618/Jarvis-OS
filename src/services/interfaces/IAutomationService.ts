@@ -1,86 +1,71 @@
 /**
  * IAutomationService — Automation Engine Contract
- *
- * Manages the creation, execution, and monitoring of automations.
+ * Milestone 8: Visual Workflow Builder
  */
 
-export type TriggerType =
-  | "time"          // e.g., "Every day at 7:00 AM"
-  | "event"         // e.g., "When application launches"
-  | "file"          // e.g., "When file added to folder"
-  | "voice"         // e.g., "When I say 'Good morning'"
-  | "manual";       // e.g., "Run now button clicked"
+// ─── Trigger Types ─────────────────────────────────────────────────────────
 
-export type ActionType =
-  | "system"        // e.g., "Sleep", "Set brightness"
-  | "file"          // e.g., "Move file", "Rename"
-  | "ai"            // e.g., "Summarize text", "Extract entities"
-  | "application"   // e.g., "Launch app", "Close app"
-  | "script";       // e.g., "Run PowerShell script"
+export type Trigger =
+  | { type: "schedule";          cron: string }
+  | { type: "hotkey";            keys: string[] }
+  | { type: "file_change";       path: string; event: "create" | "modify" | "delete" }
+  | { type: "process_start";     processName: string }
+  | { type: "ai_prompt";         match: string }
+  | { type: "clipboard_contains"; pattern: string };
 
-export interface AutomationTrigger {
-  id: string;
-  type: TriggerType;
-  config: Record<string, unknown>;
-  description: string;
+// ─── Action Types ──────────────────────────────────────────────────────────
+
+export type Action =
+  | { type: "shell_exec";        command: string; args: string[] }
+  | { type: "open_file";         path: string }
+  | { type: "ai_request";        prompt: string; outputVar: string }
+  | { type: "show_notification"; title: string; body: string }
+  | { type: "write_file";        path: string; content: string }
+  | { type: "clipboard_write";   content: string }
+  | { type: "navigate";          route: string };
+
+// ─── Condition ─────────────────────────────────────────────────────────────
+
+export interface Condition {
+  field:    string;
+  operator: "equals" | "contains" | "gt" | "lt";
+  value:    unknown;
 }
 
-export interface AutomationAction {
-  id: string;
-  type: ActionType;
-  config: Record<string, unknown>;
-  description: string;
-}
+// ─── Automation ────────────────────────────────────────────────────────────
 
 export interface Automation {
-  id: string;
-  title: string;
+  id:          string;
+  name:        string;
   description: string;
-  enabled: boolean;
-  triggers: AutomationTrigger[];
-  actions: AutomationAction[];
-  runCount: number;
-  lastRunAt?: string;
-  createdAt: string;
-  updatedAt: string;
+  enabled:     boolean;
+  trigger:     Trigger;
+  conditions:  Condition[];
+  actions:     Action[];
+  runCount:    number;
+  lastRanAt:   string | null;
+  lastStatus:  "success" | "failed" | null;
+  createdAt:   string;
 }
 
-export interface AutomationExecutionLog {
-  id: string;
-  automationId: string;
-  triggerId: string;
-  startedAt: string;
-  completedAt?: string;
-  status: "running" | "success" | "failed";
-  error?: string;
-  stepLogs: Array<{
-    actionId: string;
-    startedAt: string;
-    completedAt?: string;
-    success: boolean;
-    error?: string;
-  }>;
+// ─── Run Result ────────────────────────────────────────────────────────────
+
+export interface AutomationRunResult {
+  success:       boolean;
+  executedAt:    string;
+  durationMs:    number;
+  actionsRun:    number;
+  error?:        string;
 }
+
+// ─── Service Interface ─────────────────────────────────────────────────────
 
 export interface IAutomationService {
-  /** Get all automations */
-  getAutomations(): Promise<Automation[]>;
-
-  /** Get a specific automation */
-  getAutomation(id: string): Promise<Automation | undefined>;
-
-  /** Create or update an automation */
-  saveAutomation(automation: Omit<Automation, "createdAt" | "updatedAt" | "runCount">): Promise<Automation>;
-
-  /** Delete an automation */
-  deleteAutomation(id: string): Promise<void>;
-
-  /** Toggle automation on/off */
-  toggleAutomation(id: string, enabled: boolean): Promise<void>;
-
-  /** Manually trigger an automation */
-  runAutomation(id: string): Promise<string>; // Returns execution log ID
-
-  /** Get recent execution logs */
-  getExecutionLogs(limit?: number): Promise<AutomationExecutionLog[]>;
+  list():                                                              Promise<Automation[]>;
+  create(a: Omit<Automation, "id" | "runCount" | "lastRanAt" | "lastStatus" | "createdAt">): Promise<string>;
+  update(id: string, partial: Partial<Automation>):                   Promise<void>;
+  delete(id: string):                                                  Promise<void>;
+  run(id: string):                                                     Promise<AutomationRunResult>;
+  enable(id: string):                                                  Promise<void>;
+  disable(id: string):                                                 Promise<void>;
 }
