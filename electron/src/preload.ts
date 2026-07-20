@@ -118,6 +118,16 @@ const jarvisOS = {
     run:    (id: string)              => ipcRenderer.invoke(IpcChannels.AUTOMATION_RUN, id),
     toggle: (id: string, enabled: boolean) => ipcRenderer.invoke(IpcChannels.AUTOMATION_TOGGLE, id, enabled),
   },
+
+  // ─── Plugins (M9) ──────────────────────────────────────────────────────────
+  plugins: {
+    list:      ()             => ipcRenderer.invoke(IpcChannels.PLUGIN_LIST),
+    install:   (source: string) => ipcRenderer.invoke(IpcChannels.PLUGIN_INSTALL, source),
+    uninstall: (id: string)   => ipcRenderer.invoke(IpcChannels.PLUGIN_UNINSTALL, id),
+    enable:    (id: string)   => ipcRenderer.invoke(IpcChannels.PLUGIN_ENABLE, id),
+    disable:   (id: string)   => ipcRenderer.invoke(IpcChannels.PLUGIN_DISABLE, id),
+    call:      (id: string, method: string, args: any[]) => ipcRenderer.invoke(IpcChannels.PLUGIN_CALL, id, method, args),
+  },
 };
 
 contextBridge.exposeInMainWorld("jarvisOS", jarvisOS);

@@ -80,6 +80,14 @@ export const IpcChannels = {
   AUTOMATION_RUN:        "automation:run",
   AUTOMATION_TOGGLE:     "automation:toggle",
 
+  // ─── Plugins (M9) ────────────────────────────────────
+  PLUGIN_LIST:           "plugin:list",
+  PLUGIN_INSTALL:        "plugin:install",
+  PLUGIN_UNINSTALL:      "plugin:uninstall",
+  PLUGIN_ENABLE:         "plugin:enable",
+  PLUGIN_DISABLE:        "plugin:disable",
+  PLUGIN_CALL:           "plugin:call",
+
   // ─── Tray ─────────────────────────────────────────────
   TRAY_UPDATE_TOOLTIP:   "tray:update-tooltip",
 } as const;

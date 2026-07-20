@@ -10,6 +10,7 @@ import { registerVoiceHandlers } from "./voice.ipc";
 import { registerTtsHandlers } from "./tts.ipc";
 import { registerVisionHandlers } from "./vision.ipc";
 import { registerAutomationHandlers } from "../automation/AutomationEngine";
+import { registerPluginHandlers } from "../plugins/PluginLoader";
 
 /**
  * Register all IPC handlers in one place.
@@ -28,4 +29,5 @@ export function registerAllHandlers(): void {
   registerTtsHandlers();
   registerVisionHandlers();
   registerAutomationHandlers();
+  registerPluginHandlers();
 }
