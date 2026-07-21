@@ -1,7 +1,7 @@
 {
   "name": "jarvis-os",
   "productName": "Jarvis",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "The Intelligence of Your Computer",
   "author": {
     "name": "Jarvis OS",
@@ -17,7 +17,7 @@
     "dev": "vite dev",
     "dev:electron": "concurrently -k -n VITE,ELECTRON -c cyan,magenta \"npm run dev\" \"wait-on http://localhost:8080 && npm run electron:start\"",
     "electron:start": "cross-env NODE_ENV=development electron electron/dist/main.js",
-    "electron:build-main": "tsc -p tsconfig.electron.json",
+    "electron:build-main": "tsc -p tsconfig.electron.json && node -e \"require('fs').writeFileSync('electron/dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
