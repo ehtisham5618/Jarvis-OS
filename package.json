@@ -1,7 +1,7 @@
 {
   "name": "jarvis-os",
   "productName": "Jarvis",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "The Intelligence of Your Computer",
   "author": {
     "name": "Jarvis OS",
@@ -160,8 +160,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "license": "LICENSE",
-      "include": "installer.nsh"
+      "license": "LICENSE"
     },
     "extraMetadata": {
       "main": "electron/dist/main.js"
