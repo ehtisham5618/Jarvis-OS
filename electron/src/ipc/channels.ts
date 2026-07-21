@@ -103,6 +103,11 @@ export const IpcChannels = {
 
   // ─── Tray ─────────────────────────────────────────────
   TRAY_UPDATE_TOOLTIP:   "tray:update-tooltip",
+
+  // ─── Auto-Update (M12) ───────────────────────────────
+  UPDATE_CHECK:          "update:check",
+  UPDATE_DOWNLOAD:       "update:download",
+  UPDATE_INSTALL:        "update:install",
 } as const;
 
 export type IpcChannelName = typeof IpcChannels[keyof typeof IpcChannels];

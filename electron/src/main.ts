@@ -15,6 +15,9 @@ import log from "electron-log";
 import * as fs from "fs";
 import { registerCriticalHandlers, registerDeferredHandlers } from "./ipc/index";
 import { IpcChannels } from "./ipc/channels";
+import { registerUpdaterHandlers, scheduleUpdateChecks } from "./ipc/updater.ipc";
+import { initCrashReporter } from "./telemetry/CrashReporter";
+import { initTelemetry } from "./telemetry/TelemetryService";
 
 // ─── Logger Configuration ──────────────────────────────────────────────────
 log.transports.file.level = "info";
@@ -275,6 +278,10 @@ app.setAppUserModelId("com.jarvis-os.app");
 app.whenReady().then(() => {
   log.info(`[main] T0: App ready at ${performance.now().toFixed(2)}ms`);
 
+  // M12: Initialize crash reporter and telemetry first
+  initCrashReporter();
+  initTelemetry(true);
+
   cleanOldLogs();
 
   // Register only critical IPC handlers before creating the window
@@ -285,6 +292,10 @@ app.whenReady().then(() => {
   createWindow();
   createTray();
   registerGlobalShortcut();
+
+  // M12: Register auto-updater after window is created
+  registerUpdaterHandlers(mainWindow);
+  scheduleUpdateChecks(mainWindow);
 });
 
 app.on("window-all-closed", () => {

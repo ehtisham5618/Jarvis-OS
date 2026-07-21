@@ -153,6 +153,25 @@ const jarvisOS = {
     clear:  ()              => ipcRenderer.invoke(IpcChannels.AUDIT_CLEAR),
     export: ()              => ipcRenderer.invoke(IpcChannels.AUDIT_EXPORT),
   },
+
+  // ─── Auto-Update (M12) ──────────────────────────────────────────────────────
+  update: {
+    check:    ()  => ipcRenderer.invoke(IpcChannels.UPDATE_CHECK),
+    download: ()  => ipcRenderer.invoke(IpcChannels.UPDATE_DOWNLOAD),
+    install:  ()  => ipcRenderer.invoke(IpcChannels.UPDATE_INSTALL),
+    onAvailable:     (cb: (info: any) => void) => {
+      ipcRenderer.on("update:available", (_e, info) => cb(info));
+      return () => ipcRenderer.removeAllListeners("update:available");
+    },
+    onProgress:      (cb: (p: any) => void) => {
+      ipcRenderer.on("update:download-progress", (_e, p) => cb(p));
+      return () => ipcRenderer.removeAllListeners("update:download-progress");
+    },
+    onDownloaded:    (cb: (info: any) => void) => {
+      ipcRenderer.on("update:downloaded", (_e, info) => cb(info));
+      return () => ipcRenderer.removeAllListeners("update:downloaded");
+    },
+  },
 };
 
 contextBridge.exposeInMainWorld("jarvisOS", jarvisOS);

@@ -13,6 +13,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { initializeJarvis } from "@/core/init";
 import { LockScreen } from "@/components/auth/LockScreen";
+import { UpdateNotification } from "@/components/app/UpdateNotification";
 import { useSettingsStore } from "@/stores/settings.store";
 
 function NotFoundComponent() {
@@ -143,6 +144,19 @@ function RootComponent() {
       console.log(`[renderer] T3: Shell interactive at ${performance.now().toFixed(2)}ms`);
       setInitialized(true);
     });
+
+    // M12: Renderer crash handler → logs unhandled errors
+    const origOnError = window.onerror;
+    window.onerror = (msg, src, line, col, err) => {
+      console.error("[renderer] Unhandled error:", msg, src, line, col, err);
+      if (origOnError) origOnError(msg, src, line, col, err);
+      return false;
+    };
+    const origOnUnhandled = window.onunhandledrejection;
+    window.onunhandledrejection = (e) => {
+      console.error("[renderer] Unhandled rejection:", e.reason);
+      if (origOnUnhandled) origOnUnhandled.call(window, e);
+    };
   }, []);
 
   if (!initialized) {
@@ -196,6 +210,8 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Auto-update notification (M12) */}
+      <UpdateNotification />
       {/* Privacy mode banner */}
       {security.privacyMode && (
         <div className="fixed top-0 left-0 right-0 z-[9990] flex items-center justify-between px-8 py-2 text-xs font-medium" style={{ background: "rgba(251,191,36,0.12)", borderBottom: "1px solid rgba(251,191,36,0.2)" }}>
