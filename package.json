@@ -1,7 +1,7 @@
 {
   "name": "jarvis-os",
   "productName": "Jarvis",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "The Intelligence of Your Computer",
   "author": {
     "name": "Jarvis OS",
@@ -172,5 +172,9 @@
     "extraMetadata": {
       "main": "electron/dist/main.js"
     }
+  },
+  "overrides": {
+    "sharp": "$sharp",
+    "@img/sharp-win32-x64": "0.35.3"
   }
 }
