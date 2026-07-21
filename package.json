@@ -1,7 +1,7 @@
 {
   "name": "jarvis-os",
   "productName": "Jarvis",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "The Intelligence of Your Computer",
   "author": {
     "name": "Jarvis OS",
@@ -72,6 +72,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
     "dompurify": "^3.4.12",
+    "electron-log": "^5.4.4",
     "electron-updater": "^6.8.9",
     "electron-window-state": "^5.0.3",
     "embla-carousel-react": "^8.6.0",
@@ -118,7 +119,6 @@
     "cross-env": "^10.1.0",
     "electron": "^43.1.0",
     "electron-builder": "^26.15.3",
-    "electron-log": "^5.4.4",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
