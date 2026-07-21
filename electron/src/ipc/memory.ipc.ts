@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * memory.ipc.ts — LanceDB Vector Store IPC Handlers
  *

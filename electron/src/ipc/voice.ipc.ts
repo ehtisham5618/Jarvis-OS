@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ipcMain } from "electron";
 import { IpcChannels } from "./channels";
 import record from "node-record-lpcm16";

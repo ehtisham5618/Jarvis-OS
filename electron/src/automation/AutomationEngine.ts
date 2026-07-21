@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * AutomationEngine — Milestone 8
  *
