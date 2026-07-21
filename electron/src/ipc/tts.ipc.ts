@@ -14,11 +14,11 @@ export function registerTtsHandlers(): void {
     }
 
     log.info("[tts] Speaking:", text);
-    
+
     return new Promise<void>((resolve, reject) => {
       // Escape quotes for PowerShell
       const escapedText = text.replace(/"/g, '""');
-      
+
       const psCommand = `
         Add-Type -AssemblyName System.Speech;
         $synth = New-Object System.Speech.Synthesis.SpeechSynthesizer;

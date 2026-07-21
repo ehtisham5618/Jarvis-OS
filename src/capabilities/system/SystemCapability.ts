@@ -9,7 +9,10 @@ export interface SystemCapabilityInput {
 
 export type SystemCapabilityOutput = SystemMetrics | unknown; // expanded in future
 
-export class SystemCapability extends BaseCapability<SystemCapabilityInput, SystemCapabilityOutput> {
+export class SystemCapability extends BaseCapability<
+  SystemCapabilityInput,
+  SystemCapabilityOutput
+> {
   readonly id = "system:info";
   readonly description = "Retrieves live telemetry and hardware metrics from the system.";
   readonly requiredPermissions = ["system.read"];

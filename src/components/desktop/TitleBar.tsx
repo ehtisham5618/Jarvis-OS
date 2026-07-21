@@ -22,8 +22,7 @@ export function TitleBar() {
     // so we check via CSS media query / window size comparison as a heuristic
     const checkMaximized = () => {
       setIsMaximized(
-        window.innerWidth === window.screen.width &&
-          window.innerHeight === window.screen.height
+        window.innerWidth === window.screen.width && window.innerHeight === window.screen.height,
       );
     };
     window.addEventListener("resize", checkMaximized);
@@ -44,9 +43,7 @@ export function TitleBar() {
         <div className="grid size-5 place-items-center rounded-md bg-gradient-to-br from-[#4f7dff] to-[#7b5cff]">
           <Sparkles className="size-3 text-white" strokeWidth={2.5} />
         </div>
-        <span className="text-[11px] font-semibold tracking-tight text-white/80">
-          Jarvis OS
-        </span>
+        <span className="text-[11px] font-semibold tracking-tight text-white/80">Jarvis OS</span>
       </div>
 
       {/* Spacer (draggable) */}

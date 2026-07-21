@@ -46,9 +46,7 @@ export function ChatContainer() {
       {providerStatus === "offline" && (
         <div className="flex items-center gap-3 border-b border-amber-500/20 bg-amber-500/5 px-6 py-2.5 text-sm text-amber-400 animate-fade-in">
           <WifiOff className="size-4 shrink-0" />
-          <span>
-            Ollama is offline — responses are mocked. Start Ollama to enable real AI.
-          </span>
+          <span>Ollama is offline — responses are mocked. Start Ollama to enable real AI.</span>
         </div>
       )}
 
@@ -78,10 +76,7 @@ export function ChatContainer() {
 
       {/* Input — anchored to bottom */}
       <div className="shrink-0 border-t border-white/[0.04] px-6 py-4">
-        <ChatInput
-          onSend={handleSend}
-          autoFocus
-        />
+        <ChatInput onSend={handleSend} autoFocus />
       </div>
     </div>
   );

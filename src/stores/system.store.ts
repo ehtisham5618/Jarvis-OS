@@ -6,7 +6,7 @@ interface SystemState {
   metrics: SystemMetrics | null;
   processes: ProcessInfo[];
   isPolling: boolean;
-  
+
   startPolling: (intervalMs?: number) => void;
   stopPolling: () => void;
   refreshNow: () => Promise<void>;
@@ -21,12 +21,12 @@ export const useSystemStore = create<SystemState>()((set, get) => ({
 
   startPolling: (intervalMs = 1500) => {
     if (pollTimer) return;
-    
+
     set({ isPolling: true });
-    
+
     // Initial fetch
     get().refreshNow();
-    
+
     // Poll
     pollTimer = setInterval(() => {
       get().refreshNow();
@@ -43,7 +43,9 @@ export const useSystemStore = create<SystemState>()((set, get) => ({
 
   refreshNow: async () => {
     try {
-      const systemService = serviceRegistry.resolve<import("@/services/interfaces/ISystemService").ISystemService>(ServiceToken.System);
+      const systemService = serviceRegistry.resolve<
+        import("@/services/interfaces/ISystemService").ISystemService
+      >(ServiceToken.System);
       const [metrics, processes] = await Promise.all([
         systemService.getMetrics(),
         systemService.getProcesses(),

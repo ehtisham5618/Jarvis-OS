@@ -16,19 +16,15 @@ export function registerVisionHandlers(): void {
       // Return raw PNG buffer
       return sources[0].thumbnail.toPNG();
     }
-    
+
     throw new Error("No screens found");
   });
 
   ipcMain.handle(IpcChannels.VISION_OCR, async (_, imageBuffer: Buffer) => {
     log.info("[vision] Running OCR on image buffer...");
-    
+
     // Pre-process for OCR: grayscale and increase contrast using Sharp
-    const processedBuffer = await sharp(imageBuffer)
-      .greyscale()
-      .normalize()
-      .png()
-      .toBuffer();
+    const processedBuffer = await sharp(imageBuffer).greyscale().normalize().png().toBuffer();
 
     const result = await Tesseract.recognize(processedBuffer, "eng", {
       logger: (m) => log.debug("[tesseract]", m.status, Math.round(m.progress * 100) + "%"),
@@ -38,6 +34,6 @@ export function registerVisionHandlers(): void {
     return result.data.text.trim();
   });
 
-  // VISION_ANALYZE will be handled in the renderer process via Ollama chat API 
+  // VISION_ANALYZE will be handled in the renderer process via Ollama chat API
   // with the base64 image attached to the prompt.
 }

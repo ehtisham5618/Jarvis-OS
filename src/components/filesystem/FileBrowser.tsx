@@ -8,9 +8,24 @@
 
 import { useState, useEffect, useCallback, useRef, type KeyboardEvent } from "react";
 import {
-  Folder, FolderOpen, File, FileText, FileCode, FileImage,
-  FileVideo, FileAudio, ArrowLeft, ChevronRight, MoreHorizontal,
-  Copy, Trash2, ExternalLink, Home, Download, FileArchive, RefreshCcw,
+  Folder,
+  FolderOpen,
+  File,
+  FileText,
+  FileCode,
+  FileImage,
+  FileVideo,
+  FileAudio,
+  ArrowLeft,
+  ChevronRight,
+  MoreHorizontal,
+  Copy,
+  Trash2,
+  ExternalLink,
+  Home,
+  Download,
+  FileArchive,
+  RefreshCcw,
 } from "lucide-react";
 import { serviceRegistry, ServiceToken } from "@/core/service-registry";
 import type { IWindowsService } from "@/services/interfaces/IWindowsService";
@@ -25,18 +40,36 @@ interface FsEntry {
 function getFileIcon(name: string, isDir: boolean) {
   if (isDir) return Folder;
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
-  const codeExts = ["ts", "tsx", "js", "jsx", "py", "rs", "go", "cpp", "c", "h", "java", "cs", "json", "yaml", "toml", "html", "css"];
-  const imgExts  = ["png", "jpg", "jpeg", "gif", "svg", "webp", "ico", "bmp"];
-  const vidExts  = ["mp4", "mov", "avi", "mkv", "webm"];
-  const audExts  = ["mp3", "wav", "flac", "ogg", "m4a"];
-  const arcExts  = ["zip", "rar", "7z", "tar", "gz"];
-  const txtExts  = ["txt", "md", "mdx", "log", "csv"];
+  const codeExts = [
+    "ts",
+    "tsx",
+    "js",
+    "jsx",
+    "py",
+    "rs",
+    "go",
+    "cpp",
+    "c",
+    "h",
+    "java",
+    "cs",
+    "json",
+    "yaml",
+    "toml",
+    "html",
+    "css",
+  ];
+  const imgExts = ["png", "jpg", "jpeg", "gif", "svg", "webp", "ico", "bmp"];
+  const vidExts = ["mp4", "mov", "avi", "mkv", "webm"];
+  const audExts = ["mp3", "wav", "flac", "ogg", "m4a"];
+  const arcExts = ["zip", "rar", "7z", "tar", "gz"];
+  const txtExts = ["txt", "md", "mdx", "log", "csv"];
   if (codeExts.includes(ext)) return FileCode;
-  if (imgExts.includes(ext))  return FileImage;
-  if (vidExts.includes(ext))  return FileVideo;
-  if (audExts.includes(ext))  return FileAudio;
-  if (arcExts.includes(ext))  return FileArchive;
-  if (txtExts.includes(ext))  return FileText;
+  if (imgExts.includes(ext)) return FileImage;
+  if (vidExts.includes(ext)) return FileVideo;
+  if (audExts.includes(ext)) return FileAudio;
+  if (arcExts.includes(ext)) return FileArchive;
+  if (txtExts.includes(ext)) return FileText;
   return File;
 }
 
@@ -121,8 +154,7 @@ export function FileBrowser({ startPath }: { startPath?: string }) {
     }
   };
 
-  const fullPath = (name: string) =>
-    `${currentPath.replace(/[\\/]+$/, "")}\\${name}`;
+  const fullPath = (name: string) => `${currentPath.replace(/[\\/]+$/, "")}\\${name}`;
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "ArrowDown") {
@@ -187,7 +219,10 @@ export function FileBrowser({ startPath }: { startPath?: string }) {
       </div>
 
       {/* File list */}
-      <div className="flex-1 overflow-y-auto p-2" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.08) transparent" }}>
+      <div
+        className="flex-1 overflow-y-auto p-2"
+        style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.08) transparent" }}
+      >
         {loading && (
           <div className="flex h-32 items-center justify-center">
             <div className="size-5 animate-spin rounded-full border-2 border-[#61c7ff] border-t-transparent" />
@@ -253,12 +288,26 @@ export function FileBrowser({ startPath }: { startPath?: string }) {
             style={{ left: contextMenu.x, top: contextMenu.y }}
           >
             {[
-              { icon: ExternalLink, label: "Open", action: () => openEntry(contextMenu.entry, fullPath(contextMenu.entry.name)) },
-              { icon: Copy, label: "Copy Path", action: () => { windowsService.writeClipboard(fullPath(contextMenu.entry.name)); closeContext(); } },
+              {
+                icon: ExternalLink,
+                label: "Open",
+                action: () => openEntry(contextMenu.entry, fullPath(contextMenu.entry.name)),
+              },
+              {
+                icon: Copy,
+                label: "Copy Path",
+                action: () => {
+                  windowsService.writeClipboard(fullPath(contextMenu.entry.name));
+                  closeContext();
+                },
+              },
             ].map(({ icon: Icon, label, action }) => (
               <button
                 key={label}
-                onClick={() => { action(); closeContext(); }}
+                onClick={() => {
+                  action();
+                  closeContext();
+                }}
                 className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/70 transition hover:bg-white/5 hover:text-white"
               >
                 <Icon className="size-3.5" />

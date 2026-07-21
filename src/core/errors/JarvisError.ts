@@ -33,11 +33,7 @@ export class JarvisError extends Error {
   public readonly timestamp: string;
   public override readonly cause?: Error;
 
-  constructor(
-    message: string,
-    code: JarvisErrorCode,
-    context: JarvisErrorContext = {},
-  ) {
+  constructor(message: string, code: JarvisErrorCode, context: JarvisErrorContext = {}) {
     super(message);
     this.name = "JarvisError";
     this.code = code;

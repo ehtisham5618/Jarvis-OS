@@ -7,11 +7,7 @@ import { JarvisError, type JarvisErrorContext } from "./JarvisError";
 export class CapabilityError extends JarvisError {
   public readonly capabilityId: string;
 
-  constructor(
-    message: string,
-    capabilityId: string,
-    context: JarvisErrorContext = {},
-  ) {
+  constructor(message: string, capabilityId: string, context: JarvisErrorContext = {}) {
     super(message, `CAPABILITY_${capabilityId.toUpperCase().replace(/-/g, "_")}_FAILED`, {
       ...context,
       module: context.module ?? `capability:${capabilityId}`,

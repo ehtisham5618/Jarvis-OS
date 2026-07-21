@@ -13,7 +13,8 @@ const log = Logger.for("memory:mock");
 const MOCK_DATA: MemoryEntry[] = [
   {
     id: uuidv4(),
-    content: "Discussed the architectural layout of the Jarvis shell components. Agreed to use Lucide React for iconography and Tailwind for styling.",
+    content:
+      "Discussed the architectural layout of the Jarvis shell components. Agreed to use Lucide React for iconography and Tailwind for styling.",
     source: "conversation",
     tags: ["architecture", "design", "ui"],
     createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
@@ -29,18 +30,21 @@ const MOCK_DATA: MemoryEntry[] = [
   },
   {
     id: uuidv4(),
-    content: "Summarized project features: Local LLM integration, IPC bridges for file system access, and native Windows notifications.",
+    content:
+      "Summarized project features: Local LLM integration, IPC bridges for file system access, and native Windows notifications.",
     source: "conversation",
     tags: ["features", "summary"],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-  }
+  },
 ];
 
 export class MockMemoryService implements IMemoryService {
   private memories: MemoryEntry[] = [...MOCK_DATA];
 
-  async store(entry: Omit<MemoryEntry, "id" | "embedding" | "createdAt" | "updatedAt">): Promise<string> {
+  async store(
+    entry: Omit<MemoryEntry, "id" | "embedding" | "createdAt" | "updatedAt">,
+  ): Promise<string> {
     log.info(`[MOCK] Storing memory: "${entry.content.slice(0, 40)}..."`);
     const newEntry: MemoryEntry = {
       ...entry,
@@ -57,9 +61,12 @@ export class MockMemoryService implements IMemoryService {
     // Basic fuzzy search simulation
     const q = query.toLowerCase();
     const results = this.memories
-      .filter(m => m.content.toLowerCase().includes(q) || m.tags.some(t => t.toLowerCase().includes(q)))
+      .filter(
+        (m) =>
+          m.content.toLowerCase().includes(q) || m.tags.some((t) => t.toLowerCase().includes(q)),
+      )
       .slice(0, topK);
-    
+
     return results.length > 0 ? results : this.memories.slice(0, topK); // Fallback to recent if no match
   }
 
@@ -70,7 +77,7 @@ export class MockMemoryService implements IMemoryService {
 
   async delete(id: string): Promise<void> {
     log.info(`[MOCK] Deleting memory: ${id}`);
-    this.memories = this.memories.filter(m => m.id !== id);
+    this.memories = this.memories.filter((m) => m.id !== id);
   }
 
   async clear(): Promise<void> {

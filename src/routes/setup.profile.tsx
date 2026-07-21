@@ -14,11 +14,11 @@ function ProfileStep() {
 
   const handleNext = () => {
     if (!name.trim()) return;
-    
+
     // Generate initials (up to 2 letters)
     const initials = name
       .split(" ")
-      .map(n => n[0])
+      .map((n) => n[0])
       .join("")
       .substring(0, 2)
       .toUpperCase();

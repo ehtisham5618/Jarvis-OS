@@ -22,27 +22,15 @@ export function PageHeader({
         <h1 className="text-gradient text-[44px] font-light leading-[1.05] tracking-tight">
           {title}
         </h1>
-        {subtitle && (
-          <p className="mt-3 max-w-xl text-base text-muted-foreground">
-            {subtitle}
-          </p>
-        )}
+        {subtitle && <p className="mt-3 max-w-xl text-base text-muted-foreground">{subtitle}</p>}
       </div>
       {right}
     </header>
   );
 }
 
-export function Panel({
-  children,
-  className = "",
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={`glass rounded-2xl p-6 ${className}`}>{children}</div>
-  );
+export function Panel({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={`glass rounded-2xl p-6 ${className}`}>{children}</div>;
 }
 
 export function SectionTitle({ children }: { children: ReactNode }) {

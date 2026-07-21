@@ -40,8 +40,8 @@ function cleanOldLogs() {
     const logPath = path.dirname(log.transports.file.getFile().path);
     const files = fs.readdirSync(logPath);
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    
-    files.forEach(file => {
+
+    files.forEach((file) => {
       if (file.endsWith(".log")) {
         const filePath = path.join(logPath, file);
         const stats = fs.statSync(filePath);
@@ -87,9 +87,9 @@ function createWindow(): void {
 
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
-      contextIsolation: true,     // Security: renderer cannot access Node APIs
-      nodeIntegration: false,     // Security: never enable
-      sandbox: false,             // Required for preload script to use ipcRenderer
+      contextIsolation: true, // Security: renderer cannot access Node APIs
+      nodeIntegration: false, // Security: never enable
+      sandbox: false, // Required for preload script to use ipcRenderer
       webSecurity: true,
     },
   });
@@ -113,7 +113,7 @@ function createWindow(): void {
   mainWindow.once("ready-to-show", () => {
     mainWindow?.show();
     log.info(`[main] T1: Window shown at ${performance.now().toFixed(2)}ms`);
-    
+
     // Register non-critical handlers and plugins (M11)
     setTimeout(() => {
       registerDeferredHandlers();
@@ -260,10 +260,10 @@ function applyContentSecurityPolicy(): void {
         "Content-Security-Policy": [
           [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline'",   // unsafe-inline needed for Vite HMR in dev
+            "script-src 'self' 'unsafe-inline'", // unsafe-inline needed for Vite HMR in dev
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com",
-            "connect-src 'self' http://localhost:11434 ws://localhost:*",  // Ollama + Vite HMR
+            "connect-src 'self' http://localhost:11434 ws://localhost:*", // Ollama + Vite HMR
             "img-src 'self' data:",
           ].join("; "),
         ],

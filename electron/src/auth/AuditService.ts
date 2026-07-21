@@ -19,7 +19,8 @@ function ensureDir(): void {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
-export type AuditCategory = "auth" | "capability" | "file" | "shell" | "ai" | "plugin" | "automation";
+export type AuditCategory =
+  "auth" | "capability" | "file" | "shell" | "ai" | "plugin" | "automation";
 export type AuditActor = "user" | "jarvis" | `plugin:${string}`;
 export type AuditStatus = "allowed" | "denied" | "failed";
 
@@ -46,10 +47,15 @@ function readAll(): AuditEntry[] {
   ensureDir();
   if (!fs.existsSync(AUDIT_FILE)) return [];
   const lines = fs.readFileSync(AUDIT_FILE, "utf-8").split("\n").filter(Boolean);
-  return lines.map((l) => {
-    try { return JSON.parse(l) as AuditEntry; }
-    catch { return null; }
-  }).filter(Boolean) as AuditEntry[];
+  return lines
+    .map((l) => {
+      try {
+        return JSON.parse(l) as AuditEntry;
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean) as AuditEntry[];
 }
 
 function appendEntry(entry: AuditEntry): void {
@@ -71,10 +77,10 @@ const _auditService = {
   query(filters: AuditFilter = {}): AuditEntry[] {
     let entries = readAll();
     if (filters.category) entries = entries.filter((e) => e.category === filters.category);
-    if (filters.actor)    entries = entries.filter((e) => e.actor === filters.actor);
-    if (filters.status)   entries = entries.filter((e) => e.status === filters.status);
-    if (filters.since)    entries = entries.filter((e) => e.timestamp >= filters.since!);
-    if (filters.until)    entries = entries.filter((e) => e.timestamp <= filters.until!);
+    if (filters.actor) entries = entries.filter((e) => e.actor === filters.actor);
+    if (filters.status) entries = entries.filter((e) => e.status === filters.status);
+    if (filters.since) entries = entries.filter((e) => e.timestamp >= filters.since!);
+    if (filters.until) entries = entries.filter((e) => e.timestamp <= filters.until!);
     // Most recent first
     entries.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
     if (filters.limit) entries = entries.slice(0, filters.limit);
@@ -94,8 +100,12 @@ const _auditService = {
 export const auditService = _auditService;
 
 export function registerAuditHandlers(): void {
-  ipcMain.handle("audit:log",    (_, partial: Omit<AuditEntry, "id" | "timestamp">) => { _auditService.log(partial); });
-  ipcMain.handle("audit:query",  (_, filters: AuditFilter) => _auditService.query(filters));
-  ipcMain.handle("audit:clear",  () => { _auditService.clear(); });
+  ipcMain.handle("audit:log", (_, partial: Omit<AuditEntry, "id" | "timestamp">) => {
+    _auditService.log(partial);
+  });
+  ipcMain.handle("audit:query", (_, filters: AuditFilter) => _auditService.query(filters));
+  ipcMain.handle("audit:clear", () => {
+    _auditService.clear();
+  });
   ipcMain.handle("audit:export", () => _auditService.export());
 }

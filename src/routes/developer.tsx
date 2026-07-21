@@ -16,7 +16,17 @@ export const Route = createFileRoute("/developer")({
 });
 
 function Developer() {
-  const { plugins, marketplaceListings, isLoading, loadInstalled, loadMarketplace, install, enable, disable, uninstall } = usePluginStore();
+  const {
+    plugins,
+    marketplaceListings,
+    isLoading,
+    loadInstalled,
+    loadMarketplace,
+    install,
+    enable,
+    disable,
+    uninstall,
+  } = usePluginStore();
   const [activeTab, setActiveTab] = useState<"installed" | "marketplace">("installed");
 
   useEffect(() => {
@@ -80,26 +90,50 @@ function Developer() {
               <div className="rounded-2xl border border-dashed border-white/10 p-10 text-center">
                 <Plug className="size-8 mx-auto mb-3 text-white/20" />
                 <div className="text-sm font-medium">No plugins loaded</div>
-                <div className="text-xs text-white/40 mt-1">Load an unpacked plugin folder to start developing.</div>
+                <div className="text-xs text-white/40 mt-1">
+                  Load an unpacked plugin folder to start developing.
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {plugins.map((plugin) => (
-                  <div key={plugin.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 relative overflow-hidden group">
+                  <div
+                    key={plugin.id}
+                    className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 relative overflow-hidden group"
+                  >
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <div className="text-sm font-medium">{plugin.name}</div>
-                        <div className="text-[10px] text-white/40">{plugin.id} v{plugin.version}</div>
+                        <div className="text-[10px] text-white/40">
+                          {plugin.id} v{plugin.version}
+                        </div>
                       </div>
                       <div className="flex gap-1">
-                        <button onClick={() => disable(plugin.id)} className="p-1 rounded hover:bg-white/10 text-white/40" title="Disable"><Power className="size-3" /></button>
-                        <button onClick={() => uninstall(plugin.id)} className="p-1 rounded hover:bg-white/10 text-white/40 hover:text-red-400" title="Uninstall"><TrashIcon /></button>
+                        <button
+                          onClick={() => disable(plugin.id)}
+                          className="p-1 rounded hover:bg-white/10 text-white/40"
+                          title="Disable"
+                        >
+                          <Power className="size-3" />
+                        </button>
+                        <button
+                          onClick={() => uninstall(plugin.id)}
+                          className="p-1 rounded hover:bg-white/10 text-white/40 hover:text-red-400"
+                          title="Uninstall"
+                        >
+                          <TrashIcon />
+                        </button>
                       </div>
                     </div>
                     <p className="text-xs text-white/60 mb-4 line-clamp-2">{plugin.description}</p>
                     <div className="flex flex-wrap gap-1 mb-4">
-                      {plugin.permissions.map(p => (
-                        <span key={p} className="px-1.5 py-0.5 rounded-sm bg-white/5 text-[9px] text-white/50 uppercase">{p}</span>
+                      {plugin.permissions.map((p) => (
+                        <span
+                          key={p}
+                          className="px-1.5 py-0.5 rounded-sm bg-white/5 text-[9px] text-white/50 uppercase"
+                        >
+                          {p}
+                        </span>
                       ))}
                     </div>
                     {plugin.contributes.capabilities && (
@@ -118,9 +152,14 @@ function Developer() {
           <div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {marketplaceListings.map((listing) => (
-                <div key={listing.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                <div
+                  key={listing.id}
+                  className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5"
+                >
                   <div className="text-sm font-medium mb-1">{listing.name}</div>
-                  <div className="text-[10px] text-white/40 mb-3">by {listing.author} · v{listing.version}</div>
+                  <div className="text-[10px] text-white/40 mb-3">
+                    by {listing.author} · v{listing.version}
+                  </div>
                   <p className="text-xs text-white/60 mb-4 h-8">{listing.description}</p>
                   <button className="w-full flex justify-center items-center gap-2 rounded-lg bg-white/5 py-2 text-xs font-medium hover:bg-white/10 transition">
                     <Download className="size-3" /> Install
@@ -130,7 +169,6 @@ function Developer() {
             </div>
           </div>
         )}
-
       </div>
     </Shell>
   );
@@ -138,6 +176,22 @@ function Developer() {
 
 function TrashIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 6h18" />
+      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+      <line x1="10" x2="10" y1="11" y2="17" />
+      <line x1="14" x2="14" y1="11" y2="17" />
+    </svg>
   );
 }

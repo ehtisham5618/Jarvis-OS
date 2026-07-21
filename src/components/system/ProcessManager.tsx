@@ -88,8 +88,8 @@ export function ProcessManager() {
     .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name);
-      if (sort === "pid")  return a.pid - b.pid;
-      if (sort === "mem")  return b.mem - a.mem;
+      if (sort === "pid") return a.pid - b.pid;
+      if (sort === "mem") return b.mem - a.mem;
       return b.cpu - a.cpu; // cpu default
     });
 
@@ -115,7 +115,10 @@ export function ProcessManager() {
             className="w-full rounded-lg border border-white/[0.06] bg-white/[0.02] py-1.5 pl-8 pr-3 text-xs text-white/80 placeholder:text-white/25 focus:outline-none focus:border-white/15"
           />
           {search && (
-            <button onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/30">
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-white/30"
+            >
               <X className="size-3" />
             </button>
           )}
@@ -138,13 +141,16 @@ export function ProcessManager() {
       )}
 
       {/* Table */}
-      <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.06) transparent" }}>
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.06) transparent" }}
+      >
         {/* Header */}
         <div className="sticky top-0 grid grid-cols-[2fr_1fr_1fr_1fr_auto] items-center gap-4 border-b border-white/[0.04] bg-[#060809]/90 px-4 py-2 backdrop-blur">
           <SortBtn k="name" label="Process" />
-          <SortBtn k="pid"  label="PID" />
-          <SortBtn k="cpu"  label="CPU %" />
-          <SortBtn k="mem"  label="RAM (MB)" />
+          <SortBtn k="pid" label="PID" />
+          <SortBtn k="cpu" label="CPU %" />
+          <SortBtn k="mem" label="RAM (MB)" />
           <span className="text-xs text-white/30">Kill</span>
         </div>
 
@@ -172,9 +178,7 @@ export function ProcessManager() {
                     style={{ width: `${Math.min(p.cpu, 100)}%` }}
                   />
                 </div>
-                <span className={`font-mono text-xs ${cpuColor(p.cpu)}`}>
-                  {p.cpu.toFixed(1)}
-                </span>
+                <span className={`font-mono text-xs ${cpuColor(p.cpu)}`}>{p.cpu.toFixed(1)}</span>
               </div>
 
               {/* RAM */}

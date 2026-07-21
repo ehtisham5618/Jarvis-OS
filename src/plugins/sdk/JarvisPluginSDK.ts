@@ -29,7 +29,7 @@ export interface JarvisPluginSDK {
     writeFile(path: string, content: string): Promise<void>;
   };
   events: {
-    on(event: string, handler: Function): void;
+    on(event: string, callback: (...args: any[]) => void): void;
     emit(event: string, data?: unknown): void;
   };
   settings: {

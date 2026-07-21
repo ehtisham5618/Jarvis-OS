@@ -12,7 +12,7 @@ import type { CapabilityContext } from "./CapabilityContext";
 import type { CapabilityResult } from "./CapabilityResult";
 
 export abstract class BaseCapability<TInput, TOutput> {
-  /** 
+  /**
    * Unique identifier for this capability.
    * e.g., "system:sleep", "file:read"
    */
@@ -33,10 +33,7 @@ export abstract class BaseCapability<TInput, TOutput> {
    * Do not override this directly — override `performExecute` instead.
    * This wrapper handles logging, telemetry, and error wrapping.
    */
-  async execute(
-    input: TInput,
-    context: CapabilityContext,
-  ): Promise<CapabilityResult<TOutput>> {
+  async execute(input: TInput, context: CapabilityContext): Promise<CapabilityResult<TOutput>> {
     const startTime = performance.now();
     try {
       // 1. In a full implementation, Permission Engine would be called here.
@@ -44,7 +41,7 @@ export abstract class BaseCapability<TInput, TOutput> {
       const data = await this.performExecute(input, context);
 
       const durationMs = performance.now() - startTime;
-      
+
       // Emit telemetry
       eventBus.emit("capability:executed", {
         capabilityId: this.id,
@@ -83,8 +80,5 @@ export abstract class BaseCapability<TInput, TOutput> {
    * The actual implementation of the capability.
    * Must be overridden by subclasses.
    */
-  protected abstract performExecute(
-    input: TInput,
-    context: CapabilityContext,
-  ): Promise<TOutput>;
+  protected abstract performExecute(input: TInput, context: CapabilityContext): Promise<TOutput>;
 }

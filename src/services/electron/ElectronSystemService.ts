@@ -1,4 +1,8 @@
-import type { ISystemService, SystemMetrics, ProcessInfo } from "@/services/interfaces/ISystemService";
+import type {
+  ISystemService,
+  SystemMetrics,
+  ProcessInfo,
+} from "@/services/interfaces/ISystemService";
 
 /**
  * Electron System Service (Renderer Side)

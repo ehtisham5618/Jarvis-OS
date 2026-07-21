@@ -10,7 +10,7 @@
 
 self.onmessage = async (e: MessageEvent) => {
   const { query, model } = e.data;
-  
+
   try {
     const res = await fetch("http://localhost:11434/api/embeddings", {
       method: "POST",
@@ -20,11 +20,11 @@ self.onmessage = async (e: MessageEvent) => {
         prompt: query,
       }),
     });
-    
+
     if (!res.ok) {
       throw new Error(`Ollama embedding failed: ${res.statusText}`);
     }
-    
+
     const json = await res.json();
     self.postMessage({ success: true, embedding: json.embedding });
   } catch (error: any) {

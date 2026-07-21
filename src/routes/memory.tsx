@@ -21,7 +21,9 @@ function MemoryRoute() {
   const { entries, clearAllMemory } = useMemoryStore();
 
   const handleClear = () => {
-    if (confirm("Are you sure you want to completely erase Jarvis's memory? This cannot be undone.")) {
+    if (
+      confirm("Are you sure you want to completely erase Jarvis's memory? This cannot be undone.")
+    ) {
       clearAllMemory();
     }
   };
@@ -37,13 +39,15 @@ function MemoryRoute() {
               {entries.length} semantic vectors indexed
             </p>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="flex rounded-lg border border-white/[0.04] bg-white/[0.02] p-1">
               <button
                 onClick={() => setTab("timeline")}
                 className={`rounded-md px-4 py-1.5 text-sm transition ${
-                  tab === "timeline" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/80"
+                  tab === "timeline"
+                    ? "bg-white/10 text-white"
+                    : "text-white/40 hover:text-white/80"
                 }`}
               >
                 Timeline
@@ -57,7 +61,7 @@ function MemoryRoute() {
                 Search
               </button>
             </div>
-            
+
             <button
               onClick={handleClear}
               className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm text-red-400 transition hover:bg-red-500/20 hover:text-red-300"

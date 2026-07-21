@@ -62,13 +62,20 @@ export function MemorySearch() {
           {results && results.length > 0 && (
             <div className="space-y-4">
               {results.map((entry, idx) => (
-                <div key={entry.id} className="relative rounded-2xl border border-white/[0.04] bg-white/[0.02] p-5">
+                <div
+                  key={entry.id}
+                  className="relative rounded-2xl border border-white/[0.04] bg-white/[0.02] p-5"
+                >
                   <div className="mb-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      {entry.source === "conversation" && <MessageSquare className="size-3.5 text-white/40" />}
+                      {entry.source === "conversation" && (
+                        <MessageSquare className="size-3.5 text-white/40" />
+                      )}
                       {entry.source === "file" && <FileText className="size-3.5 text-white/40" />}
                       {entry.source === "web" && <Globe className="size-3.5 text-white/40" />}
-                      {entry.source === "manual" && <BrainCircuit className="size-3.5 text-white/40" />}
+                      {entry.source === "manual" && (
+                        <BrainCircuit className="size-3.5 text-white/40" />
+                      )}
                       <span className="text-[10px] font-medium uppercase tracking-wider text-white/40">
                         {entry.source}
                       </span>
@@ -77,12 +84,13 @@ export function MemorySearch() {
                       {format(new Date(entry.createdAt), "MMM d, yyyy")}
                     </span>
                   </div>
-                  <div className="text-sm leading-relaxed text-white/80">
-                    {entry.content}
-                  </div>
+                  <div className="text-sm leading-relaxed text-white/80">{entry.content}</div>
                   <div className="mt-4 flex items-center gap-2">
                     {entry.tags.map((tag) => (
-                      <span key={tag} className="rounded bg-[#61c7ff]/10 px-2 py-0.5 text-[10px] text-[#61c7ff]">
+                      <span
+                        key={tag}
+                        className="rounded bg-[#61c7ff]/10 px-2 py-0.5 text-[10px] text-[#61c7ff]"
+                      >
                         #{tag}
                       </span>
                     ))}

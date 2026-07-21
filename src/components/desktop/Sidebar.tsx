@@ -57,9 +57,7 @@ export function Sidebar() {
               expanded ? "w-32 opacity-100" : "w-0 opacity-0"
             }`}
           >
-            <div className="text-[15px] font-semibold tracking-tight">
-              Jarvis
-            </div>
+            <div className="text-[15px] font-semibold tracking-tight">Jarvis</div>
             <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
               OS 1.0
             </div>
@@ -110,10 +108,10 @@ export function Sidebar() {
               expanded ? "w-32 opacity-100" : "w-0 opacity-0"
             }`}
           >
-            <div className="truncate text-xs font-medium">{profile?.preferredName || "Commander"}</div>
-            <div className="truncate text-[10px] text-muted-foreground">
-              Local · Online
+            <div className="truncate text-xs font-medium">
+              {profile?.preferredName || "Commander"}
             </div>
+            <div className="truncate text-[10px] text-muted-foreground">Local · Online</div>
           </div>
         </Link>
       </div>

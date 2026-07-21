@@ -2,16 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/desktop/Shell";
 import { PageHeader } from "@/components/desktop/primitives";
-import {
-  Plus,
-  Zap,
-  Clock,
-  Play,
-  CheckCircle,
-  XCircle,
-  Loader,
-  Clock3,
-} from "lucide-react";
+import { Plus, Zap, Clock, Play, CheckCircle, XCircle, Loader, Clock3 } from "lucide-react";
 import { AutomationCard } from "@/components/automation/AutomationCard";
 import { AutomationBuilder } from "@/components/automation/AutomationBuilder";
 import { useAutomationStore } from "@/stores/automation.store";
@@ -21,7 +12,10 @@ export const Route = createFileRoute("/automations")({
   head: () => ({
     meta: [
       { title: "Automations · Jarvis" },
-      { name: "description", content: "Visual workflow builder — Describe a workflow. Jarvis builds it." },
+      {
+        name: "description",
+        content: "Visual workflow builder — Describe a workflow. Jarvis builds it.",
+      },
     ],
   }),
   component: Automations,
@@ -59,8 +53,16 @@ const TEMPLATES = [
       trigger: { type: "schedule" as const, cron: "0 8 * * *" },
       conditions: [],
       actions: [
-        { type: "ai_request" as const, prompt: "Give me my morning briefing for today", outputVar: "briefing" },
-        { type: "show_notification" as const, title: "Morning Briefing", body: "Your briefing is ready in Jarvis" },
+        {
+          type: "ai_request" as const,
+          prompt: "Give me my morning briefing for today",
+          outputVar: "briefing",
+        },
+        {
+          type: "show_notification" as const,
+          title: "Morning Briefing",
+          body: "Your briefing is ready in Jarvis",
+        },
       ],
     },
   },
@@ -76,7 +78,11 @@ const TEMPLATES = [
       trigger: { type: "clipboard_contains" as const, pattern: "translate:" },
       conditions: [],
       actions: [
-        { type: "ai_request" as const, prompt: "Translate the following to English: {{clipboard}}", outputVar: "translation" },
+        {
+          type: "ai_request" as const,
+          prompt: "Translate the following to English: {{clipboard}}",
+          outputVar: "translation",
+        },
         { type: "clipboard_write" as const, content: "{{translation}}" },
       ],
     },
@@ -103,12 +109,14 @@ const TEMPLATES = [
 function Automations() {
   const { automations, isLoading, loadAll } = useAutomationStore();
   const [builderOpen, setBuilderOpen] = useState(false);
-  const [editTarget, setEditTarget]   = useState<Automation | undefined>(undefined);
+  const [editTarget, setEditTarget] = useState<Automation | undefined>(undefined);
   const [prefillData, setPrefillData] = useState<Partial<Automation> | undefined>(undefined);
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => {
+    loadAll();
+  }, []);
 
-  const enabled  = automations.filter((a) => a.enabled);
+  const enabled = automations.filter((a) => a.enabled);
   const disabled = automations.filter((a) => !a.enabled);
 
   const openNew = (prefill?: Partial<Automation>) => {
@@ -131,8 +139,12 @@ function Automations() {
   };
 
   const totalRuns = automations.reduce((s, a) => s + a.runCount, 0);
-  const successRate = automations.length === 0 ? 100
-    : Math.round(automations.filter((a) => a.lastStatus !== "failed").length / automations.length * 100);
+  const successRate =
+    automations.length === 0
+      ? 100
+      : Math.round(
+          (automations.filter((a) => a.lastStatus !== "failed").length / automations.length) * 100,
+        );
 
   return (
     <Shell>
@@ -154,12 +166,18 @@ function Automations() {
         {/* Stats bar */}
         <div className="mb-10 grid grid-cols-3 gap-4">
           {[
-            { label: "Total",    value: automations.length, icon: Zap,         color: "#61c7ff" },
-            { label: "Runs",     value: totalRuns,          icon: Play,         color: "#7b5cff" },
-            { label: "Success%", value: `${successRate}%`,  icon: CheckCircle,  color: "#4ade80" },
+            { label: "Total", value: automations.length, icon: Zap, color: "#61c7ff" },
+            { label: "Runs", value: totalRuns, icon: Play, color: "#7b5cff" },
+            { label: "Success%", value: `${successRate}%`, icon: CheckCircle, color: "#4ade80" },
           ].map(({ label, value, icon: Icon, color }) => (
-            <div key={label} className="flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-4">
-              <div className="grid size-10 place-items-center rounded-xl" style={{ background: `${color}18`, boxShadow: `inset 0 0 0 1px ${color}30` }}>
+            <div
+              key={label}
+              className="flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-4"
+            >
+              <div
+                className="grid size-10 place-items-center rounded-xl"
+                style={{ background: `${color}18`, boxShadow: `inset 0 0 0 1px ${color}30` }}
+              >
                 <Icon className="size-4" style={{ color }} strokeWidth={1.75} />
               </div>
               <div>
@@ -178,7 +196,9 @@ function Automations() {
               Active Automations ({enabled.length})
             </h2>
             <div className="grid grid-cols-2 gap-3">
-              {enabled.map((a) => <AutomationCard key={a.id} automation={a} onEdit={openEdit} />)}
+              {enabled.map((a) => (
+                <AutomationCard key={a.id} automation={a} onEdit={openEdit} />
+              ))}
             </div>
           </section>
         )}
@@ -190,7 +210,9 @@ function Automations() {
               Inactive ({disabled.length})
             </h2>
             <div className="grid grid-cols-2 gap-3">
-              {disabled.map((a) => <AutomationCard key={a.id} automation={a} onEdit={openEdit} />)}
+              {disabled.map((a) => (
+                <AutomationCard key={a.id} automation={a} onEdit={openEdit} />
+              ))}
             </div>
           </section>
         )}
@@ -202,8 +224,13 @@ function Automations() {
               <Zap className="size-7 text-white/20" strokeWidth={1.5} />
             </div>
             <h3 className="mb-2 text-lg font-medium">No automations yet</h3>
-            <p className="mb-6 max-w-xs text-sm text-white/40">Use a template below or create your own from scratch.</p>
-            <button onClick={() => openNew()} className="rounded-xl bg-gradient-to-r from-[#4f7dff] to-[#7b5cff] px-6 py-2.5 text-sm font-medium">
+            <p className="mb-6 max-w-xs text-sm text-white/40">
+              Use a template below or create your own from scratch.
+            </p>
+            <button
+              onClick={() => openNew()}
+              className="rounded-xl bg-gradient-to-r from-[#4f7dff] to-[#7b5cff] px-6 py-2.5 text-sm font-medium"
+            >
               Create Automation
             </button>
           </div>
@@ -217,7 +244,9 @@ function Automations() {
 
         {/* Templates */}
         <section>
-          <h2 className="mb-4 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Templates</h2>
+          <h2 className="mb-4 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Templates
+          </h2>
           <div className="grid grid-cols-2 gap-4">
             {TEMPLATES.map((tpl) => (
               <button
@@ -227,7 +256,10 @@ function Automations() {
               >
                 <div
                   className="mt-0.5 grid size-10 shrink-0 place-items-center rounded-xl transition group-hover:scale-110"
-                  style={{ background: `${tpl.accent}18`, boxShadow: `inset 0 0 0 1px ${tpl.accent}30` }}
+                  style={{
+                    background: `${tpl.accent}18`,
+                    boxShadow: `inset 0 0 0 1px ${tpl.accent}30`,
+                  }}
                 >
                   <tpl.icon className="size-4" style={{ color: tpl.accent }} strokeWidth={1.75} />
                 </div>
@@ -249,7 +281,19 @@ function Automations() {
       {/* AutomationBuilder modal */}
       {builderOpen && (
         <AutomationBuilder
-          initial={editTarget ?? (prefillData ? { ...prefillData, id: "", runCount: 0, lastRanAt: null, lastStatus: null, createdAt: "" } as Automation : undefined)}
+          initial={
+            editTarget ??
+            (prefillData
+              ? ({
+                  ...prefillData,
+                  id: "",
+                  runCount: 0,
+                  lastRanAt: null,
+                  lastStatus: null,
+                  createdAt: "",
+                } as Automation)
+              : undefined)
+          }
           onClose={closeBuilder}
         />
       )}

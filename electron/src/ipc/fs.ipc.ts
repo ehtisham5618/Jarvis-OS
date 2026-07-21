@@ -16,7 +16,7 @@ function assertSafePath(filePath: string): string {
   const resolved = path.resolve(filePath);
   if (!resolved.startsWith(ALLOWED_ROOT)) {
     throw new Error(
-      `[fs.ipc] Path traversal blocked: "${resolved}" is outside allowed root "${ALLOWED_ROOT}"`
+      `[fs.ipc] Path traversal blocked: "${resolved}" is outside allowed root "${ALLOWED_ROOT}"`,
     );
   }
   return resolved;
@@ -28,15 +28,12 @@ export function registerFsHandlers(): void {
     return await fs.readFile(safe, "utf-8");
   });
 
-  ipcMain.handle(
-    IpcChannels.FS_WRITE_FILE,
-    async (_event, filePath: string, data: string) => {
-      const safe = assertSafePath(filePath);
-      // Ensure parent directory exists
-      await fs.mkdir(path.dirname(safe), { recursive: true });
-      await fs.writeFile(safe, data, "utf-8");
-    }
-  );
+  ipcMain.handle(IpcChannels.FS_WRITE_FILE, async (_event, filePath: string, data: string) => {
+    const safe = assertSafePath(filePath);
+    // Ensure parent directory exists
+    await fs.mkdir(path.dirname(safe), { recursive: true });
+    await fs.writeFile(safe, data, "utf-8");
+  });
 
   ipcMain.handle(IpcChannels.FS_LIST_DIR, async (_event, dirPath: string) => {
     const safe = assertSafePath(dirPath);

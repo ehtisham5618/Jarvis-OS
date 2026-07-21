@@ -3,9 +3,10 @@ import { Logger } from "@/core/logger";
 
 const log = Logger.for("audit.store");
 
-export type AuditCategory = "auth" | "capability" | "file" | "shell" | "ai" | "plugin" | "automation";
-export type AuditActor    = "user" | "jarvis" | `plugin:${string}`;
-export type AuditStatus   = "allowed" | "denied" | "failed";
+export type AuditCategory =
+  "auth" | "capability" | "file" | "shell" | "ai" | "plugin" | "automation";
+export type AuditActor = "user" | "jarvis" | `plugin:${string}`;
+export type AuditStatus = "allowed" | "denied" | "failed";
 
 export interface AuditEntry {
   id: string;
@@ -40,18 +41,64 @@ const isBrowser = typeof window !== "undefined" && !("jarvisOS" in window);
 
 async function ipc<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   if (isBrowser) return fallback;
-  try { return await fn(); }
-  catch (err) { log.error("Audit IPC error", { error: err }); return fallback; }
+  try {
+    return await fn();
+  } catch (err) {
+    log.error("Audit IPC error", { error: err });
+    return fallback;
+  }
 }
 
 // Mock entries for dev mode
 const MOCK_ENTRIES: AuditEntry[] = [
-  { id: "1", timestamp: new Date(Date.now() - 60000).toISOString(), category: "auth",       action: "unlock-pin",     actor: "user",   status: "allowed" },
-  { id: "2", timestamp: new Date(Date.now() - 50000).toISOString(), category: "capability", action: "shell.exec",     actor: "jarvis", status: "denied"  },
-  { id: "3", timestamp: new Date(Date.now() - 40000).toISOString(), category: "ai",         action: "chat",           actor: "user",   status: "allowed" },
-  { id: "4", timestamp: new Date(Date.now() - 30000).toISOString(), category: "file",       action: "read",           actor: "jarvis", status: "allowed" },
-  { id: "5", timestamp: new Date(Date.now() - 20000).toISOString(), category: "automation", action: "run",            actor: "jarvis", status: "allowed" },
-  { id: "6", timestamp: new Date(Date.now() - 10000).toISOString(), category: "plugin",     action: "summarize_clipboard", actor: "plugin:sample", status: "allowed" },
+  {
+    id: "1",
+    timestamp: new Date(Date.now() - 60000).toISOString(),
+    category: "auth",
+    action: "unlock-pin",
+    actor: "user",
+    status: "allowed",
+  },
+  {
+    id: "2",
+    timestamp: new Date(Date.now() - 50000).toISOString(),
+    category: "capability",
+    action: "shell.exec",
+    actor: "jarvis",
+    status: "denied",
+  },
+  {
+    id: "3",
+    timestamp: new Date(Date.now() - 40000).toISOString(),
+    category: "ai",
+    action: "chat",
+    actor: "user",
+    status: "allowed",
+  },
+  {
+    id: "4",
+    timestamp: new Date(Date.now() - 30000).toISOString(),
+    category: "file",
+    action: "read",
+    actor: "jarvis",
+    status: "allowed",
+  },
+  {
+    id: "5",
+    timestamp: new Date(Date.now() - 20000).toISOString(),
+    category: "automation",
+    action: "run",
+    actor: "jarvis",
+    status: "allowed",
+  },
+  {
+    id: "6",
+    timestamp: new Date(Date.now() - 10000).toISOString(),
+    category: "plugin",
+    action: "summarize_clipboard",
+    actor: "plugin:sample",
+    status: "allowed",
+  },
 ];
 
 export const useAuditStore = create<AuditState>((set) => ({

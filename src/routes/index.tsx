@@ -36,7 +36,15 @@ export const Route = createFileRoute("/")({
 function Home() {
   const navigate = useNavigate();
   const { profile } = useUserStore();
-  const { threads, activeThreadId, createThread, setActiveThread, sendMessage, providerStatus, checkProviderStatus } = useAIStore();
+  const {
+    threads,
+    activeThreadId,
+    createThread,
+    setActiveThread,
+    sendMessage,
+    providerStatus,
+    checkProviderStatus,
+  } = useAIStore();
   const [inputValue, setInputValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hour = new Date().getHours();
@@ -98,17 +106,23 @@ function Home() {
             <span className="size-1.5 rounded-full bg-[#61c7ff] shadow-[0_0_8px_#61c7ff]" />
             Jarvis is listening
             {/* Provider status */}
-            <span className={`ml-auto flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] normal-case tracking-normal ${
-              providerStatus === "online"
-                ? "border-[#4ade80]/30 bg-[#4ade80]/10 text-[#4ade80]"
-                : providerStatus === "offline"
-                ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
-                : "border-white/10 bg-white/5 text-white/40"
-            }`}>
+            <span
+              className={`ml-auto flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] normal-case tracking-normal ${
+                providerStatus === "online"
+                  ? "border-[#4ade80]/30 bg-[#4ade80]/10 text-[#4ade80]"
+                  : providerStatus === "offline"
+                    ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
+                    : "border-white/10 bg-white/5 text-white/40"
+              }`}
+            >
               {providerStatus === "online" ? (
-                <><Wifi className="size-3" /> Ollama online</>
+                <>
+                  <Wifi className="size-3" /> Ollama online
+                </>
               ) : providerStatus === "offline" ? (
-                <><WifiOff className="size-3" /> Ollama offline</>
+                <>
+                  <WifiOff className="size-3" /> Ollama offline
+                </>
               ) : (
                 <>Checking…</>
               )}
@@ -117,9 +131,7 @@ function Home() {
           <h1 className="text-[56px] font-light leading-[1.05] tracking-tight text-gradient">
             {greeting}, {profile?.preferredName || "Commander"}.
           </h1>
-          <p className="mt-4 text-xl font-light text-muted-foreground">
-            How can I help you today?
-          </p>
+          <p className="mt-4 text-xl font-light text-muted-foreground">How can I help you today?</p>
         </div>
 
         {/* Live Chat Input */}
@@ -145,10 +157,16 @@ function Home() {
                   />
                   <div className="mt-6 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <button className="grid size-9 place-items-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-muted-foreground transition hover:border-white/15 hover:bg-white/[0.06] hover:text-white" title="Attach file">
+                      <button
+                        className="grid size-9 place-items-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-muted-foreground transition hover:border-white/15 hover:bg-white/[0.06] hover:text-white"
+                        title="Attach file"
+                      >
                         <Paperclip className="size-4" />
                       </button>
-                      <button className="grid size-9 place-items-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-muted-foreground transition hover:border-white/15 hover:bg-white/[0.06] hover:text-white" title="Insert file">
+                      <button
+                        className="grid size-9 place-items-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-muted-foreground transition hover:border-white/15 hover:bg-white/[0.06] hover:text-white"
+                        title="Insert file"
+                      >
                         <FileText className="size-4" />
                       </button>
                       <div className="ml-2 text-[11px] font-mono text-muted-foreground">
@@ -183,7 +201,10 @@ function Home() {
         </div>
 
         {/* Suggested prompts */}
-        <div className="mb-14 flex flex-wrap gap-2 animate-fade-in" style={{ animationDelay: "180ms" }}>
+        <div
+          className="mb-14 flex flex-wrap gap-2 animate-fade-in"
+          style={{ animationDelay: "180ms" }}
+        >
           {[
             { icon: Rocket, label: "Continue AI Project" },
             { icon: Zap, label: "Optimize my PC performance" },
@@ -237,7 +258,10 @@ function Home() {
                     )}
                     <div className="mt-3 text-[10px] font-mono text-white/25">
                       {new Date(thread.updatedAt).toLocaleString([], {
-                        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </div>
                   </button>
@@ -289,7 +313,10 @@ function Home() {
         </section>
 
         {/* Live activities */}
-        <section className="grid grid-cols-2 gap-4 animate-fade-in" style={{ animationDelay: "340ms" }}>
+        <section
+          className="grid grid-cols-2 gap-4 animate-fade-in"
+          style={{ animationDelay: "340ms" }}
+        >
           <div className="glass rounded-2xl p-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
@@ -302,9 +329,18 @@ function Home() {
                 <div key={a.title} className="flex items-center gap-3">
                   <div className="relative size-8 shrink-0">
                     <svg className="size-8 -rotate-90" viewBox="0 0 32 32">
-                      <circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="2" />
                       <circle
-                        cx="16" cy="16" r="13"
+                        cx="16"
+                        cy="16"
+                        r="13"
+                        fill="none"
+                        stroke="rgba(255,255,255,0.06)"
+                        strokeWidth="2"
+                      />
+                      <circle
+                        cx="16"
+                        cy="16"
+                        r="13"
                         fill="none"
                         stroke={a.color}
                         strokeWidth="2"
@@ -335,16 +371,24 @@ function Home() {
               <span className="text-[10px] font-mono text-muted-foreground">Today</span>
             </div>
             <p className="text-sm font-light leading-relaxed text-white/85">
-              You have <span className="text-[#61c7ff]">{Object.keys(threads).length} conversations</span> with
-              Jarvis today. Your AI assistant is{" "}
+              You have{" "}
+              <span className="text-[#61c7ff]">{Object.keys(threads).length} conversations</span>{" "}
+              with Jarvis today. Your AI assistant is{" "}
               <span className={providerStatus === "online" ? "text-[#4ade80]" : "text-amber-400"}>
                 {providerStatus === "online" ? "online and ready" : "offline"}
-              </span>. Keep building.
+              </span>
+              . Keep building.
             </p>
             <div className="mt-5 grid grid-cols-3 gap-3">
               {[
                 { label: "Chats", value: Object.keys(threads).length.toString(), color: "#61c7ff" },
-                { label: "Messages", value: Object.values(threads).reduce((acc, t) => acc + t.messages.length, 0).toString(), color: "#7b5cff" },
+                {
+                  label: "Messages",
+                  value: Object.values(threads)
+                    .reduce((acc, t) => acc + t.messages.length, 0)
+                    .toString(),
+                  color: "#7b5cff",
+                },
                 { label: "Model", value: "Llama", color: "#4ade80" },
               ].map((s) => (
                 <div key={s.label} className="rounded-xl bg-white/[0.03] p-3">

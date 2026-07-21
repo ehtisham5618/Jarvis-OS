@@ -10,7 +10,10 @@ export interface OllamaCapabilityInput {
 
 export type OllamaCapabilityOutput = ModelRecord[] | void | unknown;
 
-export class OllamaCapability extends BaseCapability<OllamaCapabilityInput, OllamaCapabilityOutput> {
+export class OllamaCapability extends BaseCapability<
+  OllamaCapabilityInput,
+  OllamaCapabilityOutput
+> {
   readonly id = "ollama:manage";
   readonly description = "Manages local AI models via Ollama.";
   readonly requiredPermissions = ["ai.manage"];

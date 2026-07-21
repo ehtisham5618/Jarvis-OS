@@ -74,8 +74,8 @@ export function UpdateNotification() {
               <RefreshCw className="size-3 text-[#61c7ff]" />
             </div>
             <span className="text-white/80">
-              <span className="font-medium text-white">Jarvis v{updateState.version}</span>
-              {" "}is available
+              <span className="font-medium text-white">Jarvis v{updateState.version}</span> is
+              available
             </span>
             <button
               onClick={handleDownload}
@@ -90,9 +90,7 @@ export function UpdateNotification() {
         {updateState.status === "downloading" && (
           <>
             <Loader2 className="size-4 animate-spin text-[#61c7ff]" />
-            <span className="text-white/80">
-              Downloading update…
-            </span>
+            <span className="text-white/80">Downloading update…</span>
             <div className="h-1.5 w-40 overflow-hidden rounded-full bg-white/10">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-[#4f7dff] to-[#7b5cff] transition-all duration-300"
@@ -109,8 +107,8 @@ export function UpdateNotification() {
               <CheckCircle className="size-3.5 text-[#4ade80]" />
             </div>
             <span className="text-white/80">
-              <span className="font-medium text-white">v{updateState.version}</span>
-              {" "}downloaded — restart to apply
+              <span className="font-medium text-white">v{updateState.version}</span> downloaded —
+              restart to apply
             </span>
             <button
               onClick={handleInstall}
@@ -123,9 +121,7 @@ export function UpdateNotification() {
         )}
 
         {updateState.status === "error" && (
-          <span className="text-red-400/80">
-            Update failed: {updateState.message}
-          </span>
+          <span className="text-red-400/80">Update failed: {updateState.message}</span>
         )}
       </div>
 

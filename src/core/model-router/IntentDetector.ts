@@ -27,16 +27,16 @@ export function detectIntent(message: string, hasAttachment = false): RequestInt
     /\b(debug|refactor|implement|build|test|lint)\b/,
     /def |const |function |import |class |return |export /,
   ];
-  if (CODE_PATTERNS.some(p => p.test(lower))) return "code";
+  if (CODE_PATTERNS.some((p) => p.test(lower))) return "code";
 
   // Reasoning: logical, analytical, math
   const REASONING_PATTERNS = [
     /\b(why|how|explain|analyze|compare|reason|think|solve|calculate|proof|derive)\b/,
     /\b(step[\s-]by[\s-]step|walk me through|break down)\b/,
     /\b(math|equation|formula|algebra|calculus|statistics)\b/,
-    /\d+\s*[\+\-\*\/]\s*\d+/, // arithmetic expression
+    /\d+\s*[+\-*/]\s*\d+/, // arithmetic expression
   ];
-  if (REASONING_PATTERNS.some(p => p.test(lower))) return "reasoning";
+  if (REASONING_PATTERNS.some((p) => p.test(lower))) return "reasoning";
 
   // Fast: short, conversational single-sentence questions
   if (message.trim().split(" ").length <= 8) return "fast";

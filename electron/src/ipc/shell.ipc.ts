@@ -13,11 +13,23 @@ import { IpcChannels } from "./channels";
 const execFileAsync = promisify(execFile);
 
 const ALLOWED_COMMANDS = new Set([
-  "git", "node", "npm", "npx", "yarn", "pnpm",
-  "python", "python3", "pip", "pip3",
-  "cargo", "rustc",
-  "code", "code-insiders",
-  "echo", "where", "which",
+  "git",
+  "node",
+  "npm",
+  "npx",
+  "yarn",
+  "pnpm",
+  "python",
+  "python3",
+  "pip",
+  "pip3",
+  "cargo",
+  "rustc",
+  "code",
+  "code-insiders",
+  "echo",
+  "where",
+  "which",
 ]);
 
 export interface ShellResult {

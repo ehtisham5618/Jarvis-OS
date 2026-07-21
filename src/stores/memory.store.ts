@@ -19,7 +19,9 @@ interface MemoryState {
 
   loadRecent(limit?: number): Promise<void>;
   searchMemory(query: string): Promise<void>;
-  storeMemory(entry: Omit<MemoryEntry, "id" | "embedding" | "createdAt" | "updatedAt">): Promise<void>;
+  storeMemory(
+    entry: Omit<MemoryEntry, "id" | "embedding" | "createdAt" | "updatedAt">,
+  ): Promise<void>;
   deleteMemory(id: string): Promise<void>;
   clearAllMemory(): Promise<void>;
 }
@@ -78,13 +80,13 @@ export const useMemoryStore = create<MemoryState>((set, get) => ({
     try {
       const memService = serviceRegistry.resolve<IMemoryService>(ServiceToken.Memory);
       await memService.delete(id);
-      
+
       // Optimistic UI update
       set((state) => ({
         entries: state.entries.filter((e) => e.id !== id),
-        lastSearch: state.lastSearch 
-          ? { ...state.lastSearch, results: state.lastSearch.results.filter(e => e.id !== id) } 
-          : null
+        lastSearch: state.lastSearch
+          ? { ...state.lastSearch, results: state.lastSearch.results.filter((e) => e.id !== id) }
+          : null,
       }));
     } catch (err: any) {
       log.error("Failed to delete memory:", err);
@@ -96,7 +98,9 @@ export const useMemoryStore = create<MemoryState>((set, get) => ({
       const memService = serviceRegistry.resolve<IMemoryService>(ServiceToken.Memory);
       await memService.clear();
       set({ entries: [], lastSearch: null });
-      useNotificationsStore.getState().show("Memory Engine", "All semantic memory has been completely erased.", "icon");
+      useNotificationsStore
+        .getState()
+        .show("Memory Engine", "All semantic memory has been completely erased.", "icon");
     } catch (err: any) {
       log.error("Failed to clear memory:", err);
     }

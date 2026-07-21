@@ -13,14 +13,14 @@ import { app } from "electron";
 import log from "electron-log";
 
 interface TelemetryPayload {
-  anonymousId: string;    // Random UUID per installation, never tied to a person
+  anonymousId: string; // Random UUID per installation, never tied to a person
   version: string;
   platform: string;
   launchCount: number;
-  routesVisited: string[];  // route names only, no content
+  routesVisited: string[]; // route names only, no content
   featuresUsed: Record<string, boolean>;
   crashCount: number;
-  date: string;             // YYYY-MM-DD (daily bucket)
+  date: string; // YYYY-MM-DD (daily bucket)
 }
 
 let telemetry: TelemetryPayload | null = null;
@@ -34,7 +34,7 @@ function getTelemetryPath(): string {
 function generateAnonymousId(): string {
   // Simple random hex ID — not tied to any system identifier
   return Array.from(crypto.getRandomValues(new Uint8Array(16)))
-    .map(b => b.toString(16).padStart(2, "0"))
+    .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
 

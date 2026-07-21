@@ -39,7 +39,7 @@ export function registerMemoryHandlers(): void {
   ipcMain.handle(IpcChannels.MEMORY_STORE, async (_evt, entry: any) => {
     const db = await getDb();
     const tables = await db.tableNames();
-    
+
     // Stringify tags for easy LanceDB storage
     const record = { ...entry, tags: JSON.stringify(entry.tags) };
 
@@ -52,16 +52,19 @@ export function registerMemoryHandlers(): void {
   });
 
   // ─── SEARCH MEMORY ───────────────────────────────────────────────────────
-  ipcMain.handle(IpcChannels.MEMORY_SEARCH, async (_evt, queryVector: number[], topK: number = 3) => {
-    const table = await getTable();
-    if (!table) return [];
+  ipcMain.handle(
+    IpcChannels.MEMORY_SEARCH,
+    async (_evt, queryVector: number[], topK: number = 3) => {
+      const table = await getTable();
+      if (!table) return [];
 
-    const results = await table.search(queryVector).limit(topK).execute();
-    return results.map((r: any) => ({
-      ...r,
-      tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
-    }));
-  });
+      const results = await table.search(queryVector).limit(topK).execute();
+      return results.map((r: any) => ({
+        ...r,
+        tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+      }));
+    },
+  );
 
   // ─── LIST RECENT MEMORY ──────────────────────────────────────────────────
   ipcMain.handle(IpcChannels.MEMORY_LIST, async (_evt, limit: number = 50) => {
@@ -72,10 +75,14 @@ export function registerMemoryHandlers(): void {
     // LanceDB node API supports select/limit.
     try {
       const results = await table.query().limit(limit).execute();
-      return results.map((r: any) => ({
-        ...r,
-        tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
-      })).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      return results
+        .map((r: any) => ({
+          ...r,
+          tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
+        }))
+        .sort(
+          (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
     } catch (err) {
       console.error("Failed to list memories:", err);
       return [];
@@ -99,26 +106,31 @@ export function registerMemoryHandlers(): void {
   });
 
   // ─── PERIODIC CLEANUP (M11) ──────────────────────────────────────────────
-  setInterval(async () => {
-    try {
-      const table = await getTable();
-      if (!table) return;
-      
-      const allRows = await table.query().execute();
-      if (allRows.length > 10000) {
-        // Sort by oldest first
-        const sorted = allRows.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-        const toDelete = sorted.slice(0, allRows.length - 10000);
-        
-        // Archive to flat file
-        const archivePath = path.join(app.getPath("userData"), "memory", "archive.jsonl");
-        for (const row of toDelete) {
-          fs.appendFileSync(archivePath, JSON.stringify(row) + "\n");
-          await table.delete(`id = '${(row as any).id}'`);
+  setInterval(
+    async () => {
+      try {
+        const table = await getTable();
+        if (!table) return;
+
+        const allRows = await table.query().execute();
+        if (allRows.length > 10000) {
+          // Sort by oldest first
+          const sorted = allRows.sort(
+            (a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+          );
+          const toDelete = sorted.slice(0, allRows.length - 10000);
+
+          // Archive to flat file
+          const archivePath = path.join(app.getPath("userData"), "memory", "archive.jsonl");
+          for (const row of toDelete) {
+            fs.appendFileSync(archivePath, JSON.stringify(row) + "\n");
+            await table.delete(`id = '${(row as any).id}'`);
+          }
         }
+      } catch (err) {
+        console.error("[Memory IPC] Periodic cleanup failed:", err);
       }
-    } catch (err) {
-      console.error("[Memory IPC] Periodic cleanup failed:", err);
-    }
-  }, 60 * 60 * 1000); // Check every hour
+    },
+    60 * 60 * 1000,
+  ); // Check every hour
 }

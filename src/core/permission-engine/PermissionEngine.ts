@@ -11,10 +11,10 @@ import { PermissionError } from "../errors";
 import type { CapabilityContext } from "../../capabilities/base/CapabilityContext";
 
 const AUTONOMY_HIERARCHY: Record<AutonomyLevel, number> = {
-  observe: 0,   // Can only read data, no mutations
-  assist: 1,    // Can mutate data, but prompts for confirmation on destructive actions
-  trusted: 2,   // Can perform most actions without prompting
-  power: 3,     // Full system access, including registry and system files
+  observe: 0, // Can only read data, no mutations
+  assist: 1, // Can mutate data, but prompts for confirmation on destructive actions
+  trusted: 2, // Can perform most actions without prompting
+  power: 3, // Full system access, including registry and system files
 };
 
 /**
@@ -35,14 +35,13 @@ const PERMISSION_REQUIREMENTS: Record<string, AutonomyLevel> = {
 };
 
 export class JarvisPermissionEngine {
-  
   /**
    * Evaluates if a capability is allowed to run.
    * Throws a PermissionError if denied.
    */
   enforce(request: PermissionCheckRequest): void {
     const result = this.check(request);
-    
+
     if (!result.granted) {
       throw new PermissionError(
         request.capabilityId,

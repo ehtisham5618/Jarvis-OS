@@ -92,7 +92,12 @@ export function registerAuthHandlers(): void {
       // No PIN set — grant access
       isLocked = false;
       failedAttempts = 0;
-      auditService.log({ category: "auth", action: "unlock-pin", actor: "user", status: "allowed" });
+      auditService.log({
+        category: "auth",
+        action: "unlock-pin",
+        actor: "user",
+        status: "allowed",
+      });
       return { success: true };
     }
 
@@ -102,13 +107,24 @@ export function registerAuthHandlers(): void {
       failedAttempts = 0;
       BrowserWindow.getAllWindows().forEach((w) => w.webContents.send("auth:unlocked"));
       log.info("[auth] Unlocked via PIN.");
-      auditService.log({ category: "auth", action: "unlock-pin", actor: "user", status: "allowed" });
+      auditService.log({
+        category: "auth",
+        action: "unlock-pin",
+        actor: "user",
+        status: "allowed",
+      });
       return { success: true };
     }
 
     failedAttempts++;
     log.warn(`[auth] Wrong PIN. Attempt ${failedAttempts}/${MAX_ATTEMPTS}`);
-    auditService.log({ category: "auth", action: "unlock-pin", actor: "user", status: "denied", details: { attempt: failedAttempts } });
+    auditService.log({
+      category: "auth",
+      action: "unlock-pin",
+      actor: "user",
+      status: "denied",
+      details: { attempt: failedAttempts },
+    });
 
     if (failedAttempts >= MAX_ATTEMPTS) {
       lockoutUntil = new Date(Date.now() + LOCKOUT_SECONDS * 1000);
@@ -126,7 +142,12 @@ export function registerAuthHandlers(): void {
       failedAttempts = 0;
       BrowserWindow.getAllWindows().forEach((w) => w.webContents.send("auth:unlocked"));
       log.info("[auth] Unlocked via Windows Hello.");
-      auditService.log({ category: "auth", action: "unlock-hello", actor: "user", status: "allowed" });
+      auditService.log({
+        category: "auth",
+        action: "unlock-hello",
+        actor: "user",
+        status: "allowed",
+      });
       return { success: true };
     }
     auditService.log({ category: "auth", action: "unlock-hello", actor: "user", status: "denied" });
@@ -135,6 +156,10 @@ export function registerAuthHandlers(): void {
 }
 
 export const authService = {
-  get isLocked() { return isLocked; },
-  setStoredPinHash(h: string | null) { storedPinHash = h; },
+  get isLocked() {
+    return isLocked;
+  },
+  setStoredPinHash(h: string | null) {
+    storedPinHash = h;
+  },
 };

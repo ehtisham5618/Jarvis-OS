@@ -67,7 +67,7 @@ export const useNotificationsStore = create<NotificationsState>((set) => ({
   dismiss(id) {
     set((state) => {
       const notifications = state.notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n
+        n.id === id ? { ...n, read: true } : n,
       );
       return {
         notifications,

@@ -8,7 +8,10 @@ import type { IVoiceService } from "@/services/interfaces/IVoiceService";
 
 export const Route = createFileRoute("/voice")({
   head: () => ({
-    meta: [{ title: "Voice · Jarvis" }, { name: "description", content: "Ambient conversation mode." }],
+    meta: [
+      { title: "Voice · Jarvis" },
+      { name: "description", content: "Ambient conversation mode." },
+    ],
   }),
   component: Voice,
 });
@@ -42,7 +45,7 @@ function Voice() {
       setIsProcessing(true);
       const text = await voiceServiceRef.current.stopRecording();
       setTranscript(text);
-      
+
       if (text.trim()) {
         // Send to AI Store and jump to chat
         const aiStore = useAIStore.getState();
@@ -85,11 +88,19 @@ function Voice() {
           {isRecording && (
             <>
               <div className="animate-orb-pulse absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(79,125,255,0.7),transparent_60%)]" />
-              <div className="animate-orb-pulse absolute inset-4 rounded-full bg-[radial-gradient(circle,rgba(123,92,255,0.6),transparent_60%)]" style={{ animationDelay: "1s" }} />
-              <div className="animate-orb-pulse absolute inset-10 rounded-full bg-[radial-gradient(circle,rgba(97,199,255,0.8),transparent_50%)]" style={{ animationDelay: "2s" }} />
+              <div
+                className="animate-orb-pulse absolute inset-4 rounded-full bg-[radial-gradient(circle,rgba(123,92,255,0.6),transparent_60%)]"
+                style={{ animationDelay: "1s" }}
+              />
+              <div
+                className="animate-orb-pulse absolute inset-10 rounded-full bg-[radial-gradient(circle,rgba(97,199,255,0.8),transparent_50%)]"
+                style={{ animationDelay: "2s" }}
+              />
             </>
           )}
-          <div className={`absolute inset-16 rounded-full bg-gradient-to-br from-[#61c7ff] via-[#4f7dff] to-[#7b5cff] shadow-[0_0_80px_20px_rgba(79,125,255,0.5)] transition-all duration-500 ${isRecording ? "scale-110" : "scale-100"}`}>
+          <div
+            className={`absolute inset-16 rounded-full bg-gradient-to-br from-[#61c7ff] via-[#4f7dff] to-[#7b5cff] shadow-[0_0_80px_20px_rgba(79,125,255,0.5)] transition-all duration-500 ${isRecording ? "scale-110" : "scale-100"}`}
+          >
             <div className="absolute inset-4 rounded-full bg-gradient-to-tr from-white/40 to-transparent blur-md" />
           </div>
         </div>
@@ -134,11 +145,13 @@ function Voice() {
           onMouseDown={handleStartRecording}
           onMouseUp={handleStopRecording}
           onMouseLeave={handleStopRecording}
-          className={`mt-10 grid size-16 place-items-center rounded-full border border-white/10 backdrop-blur transition-all duration-300 ${isRecording ? 'bg-[#4f7dff]/30 text-white scale-110' : 'bg-white/[0.05] text-white/50 hover:bg-white/[0.1]'}`}
+          className={`mt-10 grid size-16 place-items-center rounded-full border border-white/10 backdrop-blur transition-all duration-300 ${isRecording ? "bg-[#4f7dff]/30 text-white scale-110" : "bg-white/[0.05] text-white/50 hover:bg-white/[0.1]"}`}
         >
           <Mic className="size-6" />
         </button>
-        <div className="mt-4 text-[10px] text-white/30 uppercase tracking-widest">Push and hold</div>
+        <div className="mt-4 text-[10px] text-white/30 uppercase tracking-widest">
+          Push and hold
+        </div>
       </div>
     </div>
   );

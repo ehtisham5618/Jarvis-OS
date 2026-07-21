@@ -32,7 +32,7 @@ class JarvisServiceRegistry {
   register<T>(token: symbol, instance: T): void {
     if (this.instances.has(token)) {
       throw new ServiceRegistrationError(
-        `Service already registered for token: ${token.toString()}`
+        `Service already registered for token: ${token.toString()}`,
       );
     }
     this.instances.set(token, instance);
@@ -45,9 +45,7 @@ class JarvisServiceRegistry {
   resolve<T>(token: symbol): T {
     const instance = this.instances.get(token);
     if (!instance) {
-      throw new ServiceResolutionError(
-        `No service registered for token: ${token.toString()}`
-      );
+      throw new ServiceResolutionError(`No service registered for token: ${token.toString()}`);
     }
     return instance as T;
   }

@@ -52,10 +52,12 @@ export const useSettingsStore = create<SettingsState>()(
       // Security
       setPrivacyMode: (val) => set((s) => ({ security: { ...s.security, privacyMode: val } })),
       setRequireAuth: (val) => set((s) => ({ security: { ...s.security, requireAuth: val } })),
-      setAutoLockMinutes: (val) => set((s) => ({ security: { ...s.security, autoLockMinutes: val } })),
-      setEncryptionEnabled: (val) => set((s) => ({ security: { ...s.security, encryptionEnabled: val } })),
+      setAutoLockMinutes: (val) =>
+        set((s) => ({ security: { ...s.security, autoLockMinutes: val } })),
+      setEncryptionEnabled: (val) =>
+        set((s) => ({ security: { ...s.security, encryptionEnabled: val } })),
       setPinHash: (hash) => set((s) => ({ security: { ...s.security, pinHash: hash } })),
     }),
-    { name: "jarvis:settings" }
-  )
+    { name: "jarvis:settings" },
+  ),
 );

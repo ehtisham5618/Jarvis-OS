@@ -25,7 +25,7 @@ class JarvisConfigManager {
   /** Update configuration at runtime (e.g., from settings UI) */
   update(partial: Partial<JarvisConfig>): void {
     const updated = { ...this.config, ...partial };
-    
+
     // Validate
     const result = ConfigSchema.safeParse(updated);
     if (!result.success) {
@@ -40,18 +40,20 @@ class JarvisConfigManager {
 
   private loadConfig(): JarvisConfig {
     // In a real app, this would merge process.env, localStorage, and defaults
-    const isElectron = typeof window !== "undefined" && window.navigator.userAgent.includes("Electron");
-    
+    const isElectron =
+      typeof window !== "undefined" && window.navigator.userAgent.includes("Electron");
+
     const rawConfig = {
       env: import.meta.env?.MODE ?? "development",
       isElectron,
       // Attempt to load saved Ollama host from storage, otherwise use default
       ollama: {
-        host: typeof localStorage !== "undefined" 
-          ? localStorage.getItem("jarvis:ollama:host") ?? "http://localhost:11434"
-          : "http://localhost:11434",
+        host:
+          typeof localStorage !== "undefined"
+            ? (localStorage.getItem("jarvis:ollama:host") ?? "http://localhost:11434")
+            : "http://localhost:11434",
         timeoutMs: 5000,
-      }
+      },
     };
 
     const result = ConfigSchema.safeParse(rawConfig);
@@ -67,11 +69,21 @@ class JarvisConfigManager {
   private applyConfig(config: JarvisConfig): void {
     // Apply log level
     switch (config.telemetry.logLevel) {
-      case "DEBUG": Logger.setLevel(LogLevel.DEBUG); break;
-      case "INFO": Logger.setLevel(LogLevel.INFO); break;
-      case "WARN": Logger.setLevel(LogLevel.WARN); break;
-      case "ERROR": Logger.setLevel(LogLevel.ERROR); break;
-      case "SILENT": Logger.setLevel(LogLevel.SILENT); break;
+      case "DEBUG":
+        Logger.setLevel(LogLevel.DEBUG);
+        break;
+      case "INFO":
+        Logger.setLevel(LogLevel.INFO);
+        break;
+      case "WARN":
+        Logger.setLevel(LogLevel.WARN);
+        break;
+      case "ERROR":
+        Logger.setLevel(LogLevel.ERROR);
+        break;
+      case "SILENT":
+        Logger.setLevel(LogLevel.SILENT);
+        break;
     }
   }
 }

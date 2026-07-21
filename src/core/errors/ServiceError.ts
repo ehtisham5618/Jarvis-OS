@@ -30,11 +30,10 @@ export class ServiceError extends JarvisError {
  */
 export class ServiceUnavailableError extends ServiceError {
   constructor(serviceName: string, context: JarvisErrorContext = {}) {
-    super(
-      `Service "${serviceName}" is currently unavailable.`,
-      serviceName,
-      { ...context, isTransient: true },
-    );
+    super(`Service "${serviceName}" is currently unavailable.`, serviceName, {
+      ...context,
+      isTransient: true,
+    });
     this.name = "ServiceUnavailableError";
     Object.setPrototypeOf(this, new.target.prototype);
   }

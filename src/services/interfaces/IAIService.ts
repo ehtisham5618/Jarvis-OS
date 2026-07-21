@@ -34,7 +34,7 @@ export interface ChatThread {
 
 export interface ChatOptions {
   model: string;
-  temperature?: number;         // 0.0 – 2.0
+  temperature?: number; // 0.0 – 2.0
   maxTokens?: number;
   systemPrompt?: string;
   /** Stop generation at these strings */
@@ -53,8 +53,8 @@ export interface StreamToken {
  * Used by the Model Router to select the appropriate model for a task.
  */
 export interface IntentClassification {
-  intent: string;               // e.g., "coding", "reasoning", "vision", "general"
-  confidence: number;           // 0.0 – 1.0
+  intent: string; // e.g., "coding", "reasoning", "vision", "general"
+  confidence: number; // 0.0 – 1.0
   requiredCapabilities: string[]; // e.g., ["vision"], ["code-execution"]
   suggestedModel?: string;
 }
@@ -70,10 +70,7 @@ export interface IAIService {
    * Stream a chat response, yielding tokens as they arrive.
    * The stream completes when the model finishes or an error occurs.
    */
-  chat(
-    thread: ChatThread,
-    options: ChatOptions,
-  ): AsyncIterable<StreamToken>;
+  chat(thread: ChatThread, options: ChatOptions): AsyncIterable<StreamToken>;
 
   /**
    * Classify the intent of a user message.

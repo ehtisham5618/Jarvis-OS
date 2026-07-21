@@ -123,7 +123,13 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
                     <CopyButton code={codeString} />
                   </div>
                   {/* Syntax-highlighted code */}
-                  <Suspense fallback={<div className="p-4 text-xs text-white/40 font-mono">Loading highlighter...</div>}>
+                  <Suspense
+                    fallback={
+                      <div className="p-4 text-xs text-white/40 font-mono">
+                        Loading highlighter...
+                      </div>
+                    }
+                  >
                     <CodeBlock language={language} code={codeString} />
                   </Suspense>
                 </div>

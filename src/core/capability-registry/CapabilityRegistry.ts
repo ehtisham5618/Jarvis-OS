@@ -23,13 +23,12 @@ export class CapabilityNotFoundError extends JarvisError {
 }
 
 class JarvisCapabilityRegistry {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private readonly capabilities = new Map<string, BaseCapability<any, any>>();
 
   /**
    * Register a capability instance.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   register(capability: BaseCapability<any, any>): void {
     if (this.capabilities.has(capability.id)) {
       throw new CapabilityRegistrationError(`Capability already registered: ${capability.id}`);
@@ -40,7 +39,7 @@ class JarvisCapabilityRegistry {
   /**
    * Resolve a capability by its ID.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   resolve<TInput = any, TOutput = any>(id: string): BaseCapability<TInput, TOutput> {
     const cap = this.capabilities.get(id);
     if (!cap) {

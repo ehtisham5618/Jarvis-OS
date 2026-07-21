@@ -6,7 +6,7 @@ import { pipeline, env } from "@xenova/transformers";
 
 // Disable local models fallback to huggingface by default in production, but here we let xenova download the model
 env.allowLocalModels = true;
-env.useBrowserCache = false; 
+env.useBrowserCache = false;
 
 let recordingProcess: any = null;
 let audioChunks: Buffer[] = [];
@@ -27,7 +27,8 @@ export function registerVoiceHandlers(): void {
         audioType: "raw", // 'raw' typically gives raw pcm which whisper expects
       });
 
-      recordingProcess.stream()
+      recordingProcess
+        .stream()
         .on("data", (chunk: Buffer) => {
           audioChunks.push(chunk);
         })
@@ -48,7 +49,7 @@ export function registerVoiceHandlers(): void {
     log.info("[voice] Stopping recording...");
     recordingProcess.stop();
     recordingProcess = null;
-    
+
     // Combine chunks
     const pcmData = Buffer.concat(audioChunks);
     audioChunks = [];
@@ -57,7 +58,7 @@ export function registerVoiceHandlers(): void {
 
   ipcMain.handle(IpcChannels.VOICE_TRANSCRIBE, async (_, pcmData: Buffer) => {
     log.info("[voice] Transcribing audio chunk (size: " + pcmData.length + " bytes)");
-    
+
     if (pcmData.length === 0) return "";
 
     try {

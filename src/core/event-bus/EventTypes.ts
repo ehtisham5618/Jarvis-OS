@@ -24,7 +24,12 @@ import type { JarvisNotification } from "@/stores/notifications.store";
 export interface JarvisEventMap {
   // ─── System Events ───────────────────────────────────────────
   "system:metrics-updated": SystemMetrics;
-  "system:hardware-alert": { metric: string; value: number; threshold: number; level: "warning" | "critical" };
+  "system:hardware-alert": {
+    metric: string;
+    value: number;
+    threshold: number;
+    level: "warning" | "critical";
+  };
   "system:ollama-connected": { host: string; modelCount: number };
   "system:ollama-disconnected": { host: string; reason: string };
 
@@ -42,7 +47,12 @@ export interface JarvisEventMap {
   // ─── Model Events ────────────────────────────────────────────
   "models:discovered": { models: ModelRecord[] };
   "models:install-started": { modelId: string };
-  "models:install-progress": { modelId: string; progressPercent: number; downloadedBytes: number; totalBytes: number };
+  "models:install-progress": {
+    modelId: string;
+    progressPercent: number;
+    downloadedBytes: number;
+    totalBytes: number;
+  };
   "models:install-completed": { modelId: string };
   "models:install-failed": { modelId: string; error: string };
   "models:benchmark-started": { modelId: string };

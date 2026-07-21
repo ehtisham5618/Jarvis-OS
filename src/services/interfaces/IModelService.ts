@@ -14,15 +14,15 @@ export interface ModelBenchmark {
 }
 
 export interface ModelRecord {
-  id: string;                      // e.g., "llama3.1:70b"
-  name: string;                    // e.g., "Llama 3.1"
-  variant: string;                 // e.g., "70B Instruct"
-  developer: string;               // e.g., "Meta"
-  parameters: string;              // e.g., "70B"
-  contextLength: number;           // e.g., 128000
-  vramRequired: number;            // GB
-  ramRequired: number;             // GB
-  quantization: string;            // e.g., "Q4_K_M"
+  id: string; // e.g., "llama3.1:70b"
+  name: string; // e.g., "Llama 3.1"
+  variant: string; // e.g., "70B Instruct"
+  developer: string; // e.g., "Meta"
+  parameters: string; // e.g., "70B"
+  contextLength: number; // e.g., 128000
+  vramRequired: number; // GB
+  ramRequired: number; // GB
+  quantization: string; // e.g., "Q4_K_M"
   installed: boolean;
   installedAt?: string;
 

@@ -7,7 +7,11 @@ export const Route = createFileRoute("/projects")({
   head: () => ({
     meta: [
       { title: "Projects · Jarvis" },
-      { name: "description", content: "Your intelligent workspaces. Files, git, tasks, meetings, and AI summaries — grouped." },
+      {
+        name: "description",
+        content:
+          "Your intelligent workspaces. Files, git, tasks, meetings, and AI summaries — grouped.",
+      },
     ],
   }),
   component: Projects,
@@ -85,11 +89,18 @@ function Projects() {
               key={p.name}
               className="group animate-fade-in-scale relative overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.02] p-6 transition-all duration-500 hover:-translate-y-1 hover:border-white/15 hover:shadow-[0_30px_80px_-20px_rgba(79,125,255,0.35)]"
             >
-              <div className="absolute inset-x-0 top-0 h-40 opacity-60" style={{ background: p.gradient }} />
+              <div
+                className="absolute inset-x-0 top-0 h-40 opacity-60"
+                style={{ background: p.gradient }}
+              />
               <div className="relative">
                 <div className="mb-8 flex items-start justify-between">
                   <div className="grid size-12 place-items-center rounded-2xl bg-white/[0.06] backdrop-blur">
-                    <FolderKanban className="size-5" style={{ color: p.accent }} strokeWidth={1.5} />
+                    <FolderKanban
+                      className="size-5"
+                      style={{ color: p.accent }}
+                      strokeWidth={1.5}
+                    />
                   </div>
                   <ProgressRing value={p.progress} color={p.accent} />
                 </div>
@@ -149,7 +160,9 @@ function ProgressRing({ value, color }: { value: number; color: string }) {
       <svg width="52" height="52" viewBox="0 0 52 52" className="-rotate-90">
         <circle cx="26" cy="26" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3" />
         <circle
-          cx="26" cy="26" r={r}
+          cx="26"
+          cy="26"
+          r={r}
           fill="none"
           stroke={color}
           strokeWidth="3"

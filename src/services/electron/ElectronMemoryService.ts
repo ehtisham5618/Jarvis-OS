@@ -23,7 +23,9 @@ export class ElectronMemoryService implements IMemoryService {
     return serviceRegistry.resolve<IAIService>(ServiceToken.AI);
   }
 
-  async store(entry: Omit<MemoryEntry, "id" | "embedding" | "createdAt" | "updatedAt">): Promise<string> {
+  async store(
+    entry: Omit<MemoryEntry, "id" | "embedding" | "createdAt" | "updatedAt">,
+  ): Promise<string> {
     if (!this.api) throw new Error("Memory IPC not available.");
 
     log.info(`Generating embedding for new memory: "${entry.content.slice(0, 30)}..."`);
@@ -47,7 +49,7 @@ export class ElectronMemoryService implements IMemoryService {
     if (!this.api) throw new Error("Memory IPC not available.");
 
     log.debug(`Searching memory for: "${query}"`);
-    
+
     // Offload embedding calculation to a Web Worker (M11)
     const embeddingVector: number[] = await new Promise((resolve, reject) => {
       const worker = new MemorySearchWorker();

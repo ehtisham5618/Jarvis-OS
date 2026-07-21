@@ -43,7 +43,7 @@ export interface OllamaChatResponseChunk {
     content: string;
   };
   done: boolean;
-  
+
   // Only present in the final chunk
   total_duration?: number;
   load_duration?: number;

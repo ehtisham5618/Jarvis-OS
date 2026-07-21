@@ -8,20 +8,20 @@ export const Route = createFileRoute("/setup/ai")({
 });
 
 const AUTONOMY_LEVELS: { id: AutonomyLevel; title: string; desc: string }[] = [
-  { 
-    id: "observe", 
-    title: "Observer (Default)", 
-    desc: "Jarvis can only read data and suggest actions. You must manually approve everything." 
+  {
+    id: "observe",
+    title: "Observer (Default)",
+    desc: "Jarvis can only read data and suggest actions. You must manually approve everything.",
   },
-  { 
-    id: "assist", 
-    title: "Assistant", 
-    desc: "Jarvis can perform minor actions on your behalf but will prompt for confirmations." 
+  {
+    id: "assist",
+    title: "Assistant",
+    desc: "Jarvis can perform minor actions on your behalf but will prompt for confirmations.",
   },
-  { 
-    id: "trusted", 
-    title: "Trusted", 
-    desc: "Jarvis acts independently for most tasks. Best for experienced users." 
+  {
+    id: "trusted",
+    title: "Trusted",
+    desc: "Jarvis acts independently for most tasks. Best for experienced users.",
   },
 ];
 
@@ -56,8 +56,8 @@ function AIStep() {
               key={level.id}
               onClick={() => handleSelect(level.id)}
               className={`flex w-full flex-col items-start gap-1 rounded-xl border p-4 text-left transition-all ${
-                isSelected 
-                  ? "border-[#7b5cff] bg-[#7b5cff]/10" 
+                isSelected
+                  ? "border-[#7b5cff] bg-[#7b5cff]/10"
                   : "border-white/10 bg-black/20 hover:border-white/20 hover:bg-black/40"
               }`}
             >

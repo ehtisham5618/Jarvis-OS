@@ -20,9 +20,7 @@ export interface SuitabilityResult {
  * Given a model and current hardware metrics, determine if it can run.
  */
 export function computeSuitability(model: ModelRecord, metrics: SystemMetrics): SuitabilityResult {
-  const availableVram = metrics.gpu
-    ? metrics.gpu.vramTotalGB - metrics.gpu.vramUsedGB
-    : 0;
+  const availableVram = metrics.gpu ? metrics.gpu.vramTotalGB - metrics.gpu.vramUsedGB : 0;
 
   const availableRam = metrics.ram.totalGB - metrics.ram.usedGB;
 
@@ -57,11 +55,19 @@ export function computeSuitability(model: ModelRecord, metrics: SystemMetrics): 
 function estimateGpuSpeed(model: ModelRecord, headroomGB: number): number {
   // Rough estimate: smaller models on GPU are faster
   const baseSpeedByParams: Record<string, number> = {
-    "3B": 120, "7B": 90, "8B": 85, "13B": 60, "14B": 55,
-    "24B": 45, "27B": 40, "32B": 35, "70B": 22, "72B": 20,
+    "3B": 120,
+    "7B": 90,
+    "8B": 85,
+    "13B": 60,
+    "14B": 55,
+    "24B": 45,
+    "27B": 40,
+    "32B": 35,
+    "70B": 22,
+    "72B": 20,
   };
-  const paramKey = Object.keys(baseSpeedByParams).find(k =>
-    model.parameters.toUpperCase().includes(k.toUpperCase())
+  const paramKey = Object.keys(baseSpeedByParams).find((k) =>
+    model.parameters.toUpperCase().includes(k.toUpperCase()),
   );
   const base = paramKey ? baseSpeedByParams[paramKey] : 30;
   // Headroom bonus (more VRAM headroom = can batch more)
@@ -71,11 +77,19 @@ function estimateGpuSpeed(model: ModelRecord, headroomGB: number): number {
 
 function estimateCpuSpeed(model: ModelRecord, headroomGB: number): number {
   const baseSpeedByParams: Record<string, number> = {
-    "3B": 15, "7B": 10, "8B": 9, "13B": 6, "14B": 5,
-    "24B": 3, "27B": 2.5, "32B": 2, "70B": 0.8, "72B": 0.7,
+    "3B": 15,
+    "7B": 10,
+    "8B": 9,
+    "13B": 6,
+    "14B": 5,
+    "24B": 3,
+    "27B": 2.5,
+    "32B": 2,
+    "70B": 0.8,
+    "72B": 0.7,
   };
-  const paramKey = Object.keys(baseSpeedByParams).find(k =>
-    model.parameters.toUpperCase().includes(k.toUpperCase())
+  const paramKey = Object.keys(baseSpeedByParams).find((k) =>
+    model.parameters.toUpperCase().includes(k.toUpperCase()),
   );
   const base = paramKey ? baseSpeedByParams[paramKey] : 3;
   return Math.max(Math.round(base + headroomGB * 0.2), 0.5);

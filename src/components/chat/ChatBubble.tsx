@@ -19,18 +19,25 @@ interface ChatBubbleProps {
 function TypingIndicator() {
   return (
     <div className="flex items-center gap-1 py-1">
-      <span className="size-1.5 animate-bounce rounded-full bg-[#61c7ff]" style={{ animationDelay: "0ms" }} />
-      <span className="size-1.5 animate-bounce rounded-full bg-[#4f7dff]" style={{ animationDelay: "120ms" }} />
-      <span className="size-1.5 animate-bounce rounded-full bg-[#7b5cff]" style={{ animationDelay: "240ms" }} />
+      <span
+        className="size-1.5 animate-bounce rounded-full bg-[#61c7ff]"
+        style={{ animationDelay: "0ms" }}
+      />
+      <span
+        className="size-1.5 animate-bounce rounded-full bg-[#4f7dff]"
+        style={{ animationDelay: "120ms" }}
+      />
+      <span
+        className="size-1.5 animate-bounce rounded-full bg-[#7b5cff]"
+        style={{ animationDelay: "240ms" }}
+      />
     </div>
   );
 }
 
 const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage }) {
   const { profile } = useUserStore();
-  const initials = profile?.preferredName
-    ? profile.preferredName.slice(0, 2).toUpperCase()
-    : "ME";
+  const initials = profile?.preferredName ? profile.preferredName.slice(0, 2).toUpperCase() : "ME";
 
   return (
     <div className="flex items-end justify-end gap-3 animate-fade-in">
@@ -39,7 +46,10 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
           <p className="leading-relaxed whitespace-pre-wrap">{message.content}</p>
         </div>
         <p className="mt-1 text-right text-[10px] text-white/30">
-          {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          {new Date(message.timestamp).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
         </p>
       </div>
       {/* Avatar */}
@@ -50,7 +60,13 @@ const UserBubble = memo(function UserBubble({ message }: { message: ChatMessage 
   );
 });
 
-const AssistantBubble = memo(function AssistantBubble({ message, isStreaming }: { message: ChatMessage; isStreaming?: boolean }) {
+const AssistantBubble = memo(function AssistantBubble({
+  message,
+  isStreaming,
+}: {
+  message: ChatMessage;
+  isStreaming?: boolean;
+}) {
   const showTyping = isStreaming && message.content === "";
   const showContent = message.content.length > 0;
 
@@ -89,7 +105,10 @@ const AssistantBubble = memo(function AssistantBubble({ message, isStreaming }: 
         {!isStreaming && (
           <div className="mt-1 flex items-center gap-3 text-[10px] text-white/25">
             <span>
-              {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              {new Date(message.timestamp).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </span>
             {message.tokenCount && <span>{message.tokenCount.toLocaleString()} tokens</span>}
             {message.latencyMs && <span>{(message.latencyMs / 1000).toFixed(1)}s</span>}

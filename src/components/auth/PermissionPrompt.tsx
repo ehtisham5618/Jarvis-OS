@@ -21,8 +21,14 @@ export function PermissionPrompt({ request }: PermissionPromptProps) {
   // Keyboard shortcuts: Enter = Allow, Escape = Deny
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Enter")  { e.preventDefault(); request.onAllow(); }
-      if (e.key === "Escape") { e.preventDefault(); request.onDeny(); }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        request.onAllow();
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        request.onDeny();
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -66,20 +72,26 @@ export function PermissionPrompt({ request }: PermissionPromptProps) {
             onClick={request.onAllow}
             className="flex items-center justify-between rounded-xl bg-gradient-to-r from-[#4f7dff] to-[#7b5cff] px-5 py-3 text-sm font-medium shadow-[0_8px_24px_-8px_rgba(79,125,255,0.5)] transition hover:brightness-110"
           >
-            <span className="flex items-center gap-2"><Check className="size-4" /> Allow once</span>
+            <span className="flex items-center gap-2">
+              <Check className="size-4" /> Allow once
+            </span>
             <span className="text-[10px] opacity-60">Enter ↵</span>
           </button>
           <button
             onClick={request.onAllowAlways}
             className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-3 text-sm text-white/70 transition hover:bg-white/[0.06]"
           >
-            <span className="flex items-center gap-2"><ChevronRight className="size-4" /> Allow always</span>
+            <span className="flex items-center gap-2">
+              <ChevronRight className="size-4" /> Allow always
+            </span>
           </button>
           <button
             onClick={request.onDeny}
             className="flex items-center justify-between rounded-xl border border-red-500/20 bg-red-500/5 px-5 py-3 text-sm text-red-400 transition hover:bg-red-500/10"
           >
-            <span className="flex items-center gap-2"><X className="size-4" /> Deny</span>
+            <span className="flex items-center gap-2">
+              <X className="size-4" /> Deny
+            </span>
             <span className="text-[10px] opacity-60">Esc</span>
           </button>
         </div>

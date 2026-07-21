@@ -15,7 +15,7 @@ function History() {
   const { threads, setActiveThread, deleteThread, clearAllThreads } = useAIStore();
 
   const sortedThreads = Object.values(threads).sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
   );
 
   return (
@@ -23,15 +23,19 @@ function History() {
       <div className="mx-auto max-w-4xl px-8 py-12">
         <div className="mb-10 flex items-center justify-between animate-fade-in">
           <div>
-            <h1 className="text-3xl font-light tracking-tight text-white/90">Conversation History</h1>
-            <p className="mt-2 text-sm text-white/40">
-              {sortedThreads.length} total threads
-            </p>
+            <h1 className="text-3xl font-light tracking-tight text-white/90">
+              Conversation History
+            </h1>
+            <p className="mt-2 text-sm text-white/40">{sortedThreads.length} total threads</p>
           </div>
           {sortedThreads.length > 0 && (
             <button
               onClick={() => {
-                if (confirm("Are you sure you want to delete all conversation history? This cannot be undone.")) {
+                if (
+                  confirm(
+                    "Are you sure you want to delete all conversation history? This cannot be undone.",
+                  )
+                ) {
                   clearAllThreads();
                 }
               }}
@@ -55,7 +59,7 @@ function History() {
             {sortedThreads.map((thread) => {
               const date = new Date(thread.updatedAt);
               const isToday = new Date().toDateString() === date.toDateString();
-              
+
               return (
                 <div
                   key={thread.id}

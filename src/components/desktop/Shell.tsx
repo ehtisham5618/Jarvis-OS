@@ -43,9 +43,7 @@ function WorkingPill() {
             style={{ animationDelay: "240ms" }}
           />
         </div>
-        <span className="text-xs font-medium text-white/85">
-          Jarvis is analyzing 2,341 files
-        </span>
+        <span className="text-xs font-medium text-white/85">Jarvis is analyzing 2,341 files</span>
         <div className="h-1 w-24 overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full rounded-full bg-gradient-to-r from-[#61c7ff] via-[#4f7dff] to-[#7b5cff]"

@@ -21,21 +21,14 @@
  *   eventBus.emit("system:metrics-updated", { cpu: 45, ... });
  */
 
-import type {
-  JarvisEventMap,
-  JarvisEventName,
-  JarvisEventPayload,
-} from "./EventTypes";
+import type { JarvisEventMap, JarvisEventName, JarvisEventPayload } from "./EventTypes";
 
 type Subscriber<T> = (payload: T) => void;
 type WildcardSubscriber = (event: JarvisEventName, payload: unknown) => void;
 type Unsubscribe = () => void;
 
 class JarvisEventBus {
-  private readonly listeners = new Map<
-    JarvisEventName,
-    Set<Subscriber<unknown>>
-  >();
+  private readonly listeners = new Map<JarvisEventName, Set<Subscriber<unknown>>>();
   private readonly wildcardListeners = new Set<WildcardSubscriber>();
 
   /**
@@ -80,10 +73,7 @@ class JarvisEventBus {
    * Emit an event. All subscribers are called synchronously.
    * Errors in subscribers are caught and logged to avoid cascading failures.
    */
-  emit<T extends JarvisEventName>(
-    event: T,
-    payload: JarvisEventPayload<T>,
-  ): void {
+  emit<T extends JarvisEventName>(event: T, payload: JarvisEventPayload<T>): void {
     // Notify typed subscribers
     const set = this.listeners.get(event);
     if (set) {

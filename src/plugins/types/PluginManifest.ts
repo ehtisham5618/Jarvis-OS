@@ -1,10 +1,5 @@
 export type PluginPermission =
-  | "fs.read"
-  | "fs.write"
-  | "shell.exec"
-  | "network"
-  | "clipboard"
-  | "notifications";
+  "fs.read" | "fs.write" | "shell.exec" | "network" | "clipboard" | "notifications";
 
 export interface CapabilityContribution {
   id: string;
@@ -31,13 +26,13 @@ export interface SettingContribution {
 }
 
 export interface PluginManifest {
-  id: string;              // e.g., "com.jarvis.github-integration"
+  id: string; // e.g., "com.jarvis.github-integration"
   name: string;
-  version: string;         // semver
+  version: string; // semver
   description: string;
   author: string;
   homepage?: string;
-  icon?: string;           // URL or relative path
+  icon?: string; // URL or relative path
   permissions: PluginPermission[];
   contributes: {
     capabilities?: CapabilityContribution[];
@@ -45,6 +40,6 @@ export interface PluginManifest {
     commands?: CommandContribution[];
     settings?: SettingContribution[];
   };
-  main: string;            // entry point JS file
+  main: string; // entry point JS file
   minJarvisVersion: string;
 }

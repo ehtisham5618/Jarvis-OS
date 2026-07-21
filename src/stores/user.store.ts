@@ -17,7 +17,9 @@ export const useUserStore = create<UserState>()(
       setProfile: (profile) => set({ profile }),
       updateProfile: (updates) =>
         set((state) => ({
-          profile: state.profile ? { ...state.profile, ...updates, updatedAt: new Date().toISOString() } : null,
+          profile: state.profile
+            ? { ...state.profile, ...updates, updatedAt: new Date().toISOString() }
+            : null,
         })),
       completeSetup: () =>
         set((state) => ({

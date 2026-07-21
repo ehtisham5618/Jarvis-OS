@@ -16,8 +16,8 @@ export const Route = createFileRoute("/files")({
 
 // Common sidebar shortcuts — resolved via env or sensible defaults
 const SHORTCUTS = [
-  { label: "Home",      icon: Home,     path: "C:\\Users" },
-  { label: "Desktop",   icon: Monitor,  path: "C:\\Users\\Public\\Desktop" },
+  { label: "Home", icon: Home, path: "C:\\Users" },
+  { label: "Desktop", icon: Monitor, path: "C:\\Users\\Public\\Desktop" },
   { label: "Downloads", icon: Download, path: "C:\\Users\\Public\\Downloads" },
   { label: "Documents", icon: FileText, path: "C:\\Users\\Public\\Documents" },
 ];

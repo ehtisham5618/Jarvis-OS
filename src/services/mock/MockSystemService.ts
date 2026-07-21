@@ -6,7 +6,7 @@ import type { ISystemService, SystemMetrics, ProcessInfo } from "../interfaces/I
  */
 export class MockSystemService implements ISystemService {
   readonly implementationName = "Mock (Browser Simulation)";
-  
+
   private currentCpu = 24;
   private currentGpu = 12;
   private currentRam = 48; // GB
@@ -27,7 +27,7 @@ export class MockSystemService implements ISystemService {
   }
 
   async getMetrics(): Promise<SystemMetrics> {
-    const temperature = 45 + (this.currentCpu * 0.4);
+    const temperature = 45 + this.currentCpu * 0.4;
 
     return {
       timestamp: new Date().toISOString(),
@@ -57,7 +57,7 @@ export class MockSystemService implements ISystemService {
           totalGB: 2000,
           usagePercent: 62,
           label: "Macintosh HD",
-        }
+        },
       ],
       battery: {
         percent: this.batteryPercent,

@@ -32,9 +32,9 @@ function ensureDir(): void {
 // ─── In-memory state ────────────────────────────────────────────────────────
 
 let automations: Automation[] = [];
-const watchers   = new Map<string, ReturnType<typeof chokidar.watch>>();
-const cronJobs   = new Map<string, ReturnType<typeof cron.schedule>>();
-const hotkeyIds  = new Set<string>();
+const watchers = new Map<string, ReturnType<typeof chokidar.watch>>();
+const cronJobs = new Map<string, ReturnType<typeof cron.schedule>>();
+const hotkeyIds = new Set<string>();
 
 // ─── Persistence ────────────────────────────────────────────────────────────
 
@@ -65,11 +65,16 @@ function saveToDisk(): void {
 function evaluateCondition(cond: Condition, ctx: Record<string, unknown>): boolean {
   const actual = ctx[cond.field];
   switch (cond.operator) {
-    case "equals":   return actual === cond.value;
-    case "contains": return typeof actual === "string" && actual.includes(cond.value as string);
-    case "gt":       return (actual as number) > (cond.value as number);
-    case "lt":       return (actual as number) < (cond.value as number);
-    default:         return true;
+    case "equals":
+      return actual === cond.value;
+    case "contains":
+      return typeof actual === "string" && actual.includes(cond.value as string);
+    case "gt":
+      return (actual as number) > (cond.value as number);
+    case "lt":
+      return (actual as number) < (cond.value as number);
+    default:
+      return true;
   }
 }
 
@@ -87,7 +92,7 @@ async function executeAction(action: Action, _ctx: Record<string, unknown>): Pro
       const { spawn } = await import("child_process");
       await new Promise<void>((res, rej) => {
         const proc = spawn(action.command, action.args, { shell: true });
-        proc.on("close", (code) => code === 0 ? res() : rej(new Error(`Exit code ${code}`)));
+        proc.on("close", (code) => (code === 0 ? res() : rej(new Error(`Exit code ${code}`))));
         proc.on("error", rej);
       });
       break;
@@ -122,7 +127,14 @@ async function executeAction(action: Action, _ctx: Record<string, unknown>): Pro
 
 async function runAutomation(id: string): Promise<AutomationRunResult> {
   const automation = automations.find((a) => a.id === id);
-  if (!automation) return { success: false, executedAt: new Date().toISOString(), durationMs: 0, actionsRun: 0, error: "Not found" };
+  if (!automation)
+    return {
+      success: false,
+      executedAt: new Date().toISOString(),
+      durationMs: 0,
+      actionsRun: 0,
+      error: "Not found",
+    };
 
   const start = Date.now();
   let actionsRun = 0;
@@ -154,7 +166,7 @@ async function runAutomation(id: string): Promise<AutomationRunResult> {
   saveToDisk();
 
   return {
-    success:    !error,
+    success: !error,
     executedAt: automation.lastRanAt,
     durationMs: Date.now() - start,
     actionsRun,
@@ -199,9 +211,9 @@ function registerTriggers(automation: Automation): void {
         log.info(`[automation] File change trigger fired for: ${automation.name}`);
         runAutomation(automation.id);
       };
-      if (trigger.event === "create")  watcher.on("add", handler);
-      if (trigger.event === "modify")  watcher.on("change", handler);
-      if (trigger.event === "delete")  watcher.on("unlink", handler);
+      if (trigger.event === "create") watcher.on("add", handler);
+      if (trigger.event === "modify") watcher.on("change", handler);
+      if (trigger.event === "delete") watcher.on("unlink", handler);
       watchers.set(automation.id, watcher);
       break;
     }
@@ -233,11 +245,17 @@ function registerTriggers(automation: Automation): void {
 function unregisterTriggers(automationId: string): void {
   // Cron
   const job = cronJobs.get(automationId);
-  if (job) { job.stop(); cronJobs.delete(automationId); }
+  if (job) {
+    job.stop();
+    cronJobs.delete(automationId);
+  }
 
   // Chokidar
   const watcher = watchers.get(automationId);
-  if (watcher) { watcher.close(); watchers.delete(automationId); }
+  if (watcher) {
+    watcher.close();
+    watchers.delete(automationId);
+  }
 
   // Hotkeys are global — we unregister all at quit via will-quit
 }
@@ -252,20 +270,26 @@ export function registerAutomationHandlers(): void {
 
   ipcMain.handle("automation:list", () => automations);
 
-  ipcMain.handle("automation:create", (_, partial: Omit<Automation, "id" | "runCount" | "lastRanAt" | "lastStatus" | "createdAt">) => {
-    const newAutomation: Automation = {
-      ...partial,
-      id:         crypto.randomUUID(),
-      runCount:   0,
-      lastRanAt:  null,
-      lastStatus: null,
-      createdAt:  new Date().toISOString(),
-    };
-    automations.push(newAutomation);
-    saveToDisk();
-    registerTriggers(newAutomation);
-    return newAutomation.id;
-  });
+  ipcMain.handle(
+    "automation:create",
+    (
+      _,
+      partial: Omit<Automation, "id" | "runCount" | "lastRanAt" | "lastStatus" | "createdAt">,
+    ) => {
+      const newAutomation: Automation = {
+        ...partial,
+        id: crypto.randomUUID(),
+        runCount: 0,
+        lastRanAt: null,
+        lastStatus: null,
+        createdAt: new Date().toISOString(),
+      };
+      automations.push(newAutomation);
+      saveToDisk();
+      registerTriggers(newAutomation);
+      return newAutomation.id;
+    },
+  );
 
   ipcMain.handle("automation:update", (_, id: string, partial: Partial<Automation>) => {
     const idx = automations.findIndex((a) => a.id === id);
@@ -309,7 +333,10 @@ function DEFAULT_TEMPLATES(): Automation[] {
         { type: "shell_exec", command: "git", args: ["-C", "%USERPROFILE%/projects", "pull"] },
         { type: "show_notification", title: "Jarvis", body: "Git pull completed ✓" },
       ],
-      runCount: 0, lastRanAt: null, lastStatus: null, createdAt: new Date().toISOString(),
+      runCount: 0,
+      lastRanAt: null,
+      lastStatus: null,
+      createdAt: new Date().toISOString(),
     },
     {
       id: "tpl-morning-briefing",
@@ -319,23 +346,43 @@ function DEFAULT_TEMPLATES(): Automation[] {
       trigger: { type: "schedule", cron: "0 8 * * *" },
       conditions: [],
       actions: [
-        { type: "ai_request", prompt: "Give me a brief morning briefing: weather, pending tasks, and priorities for today.", outputVar: "briefing" },
-        { type: "show_notification", title: "Morning Briefing", body: "Your Jarvis briefing is ready" },
+        {
+          type: "ai_request",
+          prompt:
+            "Give me a brief morning briefing: weather, pending tasks, and priorities for today.",
+          outputVar: "briefing",
+        },
+        {
+          type: "show_notification",
+          title: "Morning Briefing",
+          body: "Your Jarvis briefing is ready",
+        },
       ],
-      runCount: 0, lastRanAt: null, lastStatus: null, createdAt: new Date().toISOString(),
+      runCount: 0,
+      lastRanAt: null,
+      lastStatus: null,
+      createdAt: new Date().toISOString(),
     },
     {
       id: "tpl-clipboard-translate",
       name: "Clipboard translator",
-      description: "When clipboard contains 'translate:' → AI translates → writes back to clipboard",
+      description:
+        "When clipboard contains 'translate:' → AI translates → writes back to clipboard",
       enabled: false,
       trigger: { type: "clipboard_contains", pattern: "translate:" },
       conditions: [],
       actions: [
-        { type: "ai_request", prompt: "Translate the following text to English: {{clipboard}}", outputVar: "translation" },
+        {
+          type: "ai_request",
+          prompt: "Translate the following text to English: {{clipboard}}",
+          outputVar: "translation",
+        },
         { type: "clipboard_write", content: "{{translation}}" },
       ],
-      runCount: 0, lastRanAt: null, lastStatus: null, createdAt: new Date().toISOString(),
+      runCount: 0,
+      lastRanAt: null,
+      lastStatus: null,
+      createdAt: new Date().toISOString(),
     },
     {
       id: "tpl-focus-mode",
@@ -346,9 +393,16 @@ function DEFAULT_TEMPLATES(): Automation[] {
       conditions: [],
       actions: [
         { type: "navigate", route: "/chat" },
-        { type: "show_notification", title: "Focus Mode", body: "Distractions minimized. Time to focus." },
+        {
+          type: "show_notification",
+          title: "Focus Mode",
+          body: "Distractions minimized. Time to focus.",
+        },
       ],
-      runCount: 0, lastRanAt: null, lastStatus: null, createdAt: new Date().toISOString(),
+      runCount: 0,
+      lastRanAt: null,
+      lastStatus: null,
+      createdAt: new Date().toISOString(),
     },
     {
       id: "tpl-new-file-notification",
@@ -358,9 +412,16 @@ function DEFAULT_TEMPLATES(): Automation[] {
       trigger: { type: "file_change", path: "%USERPROFILE%/Downloads", event: "create" },
       conditions: [],
       actions: [
-        { type: "show_notification", title: "New Download", body: "A new file was added to your Downloads folder." },
+        {
+          type: "show_notification",
+          title: "New Download",
+          body: "A new file was added to your Downloads folder.",
+        },
       ],
-      runCount: 0, lastRanAt: null, lastStatus: null, createdAt: new Date().toISOString(),
+      runCount: 0,
+      lastRanAt: null,
+      lastStatus: null,
+      createdAt: new Date().toISOString(),
     },
   ];
 }

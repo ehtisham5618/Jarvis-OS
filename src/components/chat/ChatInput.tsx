@@ -73,16 +73,16 @@ export function ChatInput({ onSend, onStop, placeholder, autoFocus = false }: Ch
 
   const handleSubmit = () => {
     const trimmed = value.trim();
-    if (!trimmed && !imageBuffer || isStreaming) return;
-    
+    if ((!trimmed && !imageBuffer) || isStreaming) return;
+
     // In a full implementation, onSend would accept the image buffer too
     // For now we just pass text as requested by the interface
     onSend(trimmed);
-    
+
     setValue("");
     setImageBuffer(null);
     setImagePreview(null);
-    
+
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
@@ -106,9 +106,16 @@ export function ChatInput({ onSend, onStop, placeholder, autoFocus = false }: Ch
         {imagePreview && (
           <div className="px-5 pt-4">
             <div className="relative inline-block">
-              <img src={imagePreview} alt="Attached" className="h-20 w-auto rounded-lg border border-white/10 object-cover" />
+              <img
+                src={imagePreview}
+                alt="Attached"
+                className="h-20 w-auto rounded-lg border border-white/10 object-cover"
+              />
               <button
-                onClick={() => { setImageBuffer(null); setImagePreview(null); }}
+                onClick={() => {
+                  setImageBuffer(null);
+                  setImagePreview(null);
+                }}
                 className="absolute -right-2 -top-2 grid size-5 place-items-center rounded-full bg-red-500 text-white shadow hover:bg-red-400"
               >
                 <X className="size-3" />
@@ -126,7 +133,7 @@ export function ChatInput({ onSend, onStop, placeholder, autoFocus = false }: Ch
           placeholder={placeholder ?? "Ask Jarvis anything…"}
           disabled={isStreaming}
           rows={1}
-          className={`w-full resize-none bg-transparent px-5 pb-2 text-sm text-white/90 placeholder:text-white/25 focus:outline-none disabled:opacity-50 ${imagePreview ? 'pt-3' : 'pt-4'}`}
+          className={`w-full resize-none bg-transparent px-5 pb-2 text-sm text-white/90 placeholder:text-white/25 focus:outline-none disabled:opacity-50 ${imagePreview ? "pt-3" : "pt-4"}`}
           style={{ maxHeight: "192px", overflowY: "auto" }}
         />
 
@@ -134,11 +141,11 @@ export function ChatInput({ onSend, onStop, placeholder, autoFocus = false }: Ch
         <div className="flex items-center justify-between px-4 pb-3">
           {/* Left: attachment + file actions */}
           <div className="flex items-center gap-1">
-            <input 
-              type="file" 
-              accept="image/*" 
-              className="hidden" 
-              ref={fileInputRef} 
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              ref={fileInputRef}
               onChange={handleFileChange}
             />
             <button
@@ -190,7 +197,6 @@ export function ChatInput({ onSend, onStop, placeholder, autoFocus = false }: Ch
           </div>
         </div>
       </div>
-
 
       {/* Hint */}
       <p className="mt-2 text-center text-[10px] text-white/20">

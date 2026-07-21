@@ -8,7 +8,7 @@
 export interface CpuMetrics {
   usagePercent: number;
   coreCount: number;
-  frequency: number;      // GHz
+  frequency: number; // GHz
   model: string;
   temperatureC?: number;
 }
@@ -26,7 +26,7 @@ export interface RamMetrics {
   usedGB: number;
   totalGB: number;
   usagePercent: number;
-  type?: string;          // "DDR5", "LPDDR5X", etc.
+  type?: string; // "DDR5", "LPDDR5X", etc.
 }
 
 export interface StorageMetrics {
@@ -68,7 +68,7 @@ export interface SystemMetrics {
   battery?: BatteryMetrics;
   network: NetworkMetrics;
   fans: FanMetrics[];
-  temperatureC?: number;   // Overall system temperature
+  temperatureC?: number; // Overall system temperature
 }
 
 export interface ProcessInfo {

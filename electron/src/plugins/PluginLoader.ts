@@ -55,8 +55,8 @@ function loadPlugin(folderName: string): void {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
-      preload: path.join(__dirname, "..", "preload.js") // Use the main preload, or a specific plugin preload
-    }
+      preload: path.join(__dirname, "..", "preload.js"), // Use the main preload, or a specific plugin preload
+    },
   });
 
   // Basic HTML wrapper to load the plugin's main script
@@ -72,7 +72,7 @@ function loadPlugin(folderName: string): void {
           // The plugin code expects to have JarvisPluginSDK injected or imported.
           // For now, just load the script.
         </script>
-        <script src="file://${mainScriptPath.replace(/\\/g, '/')}"></script>
+        <script src="file://${mainScriptPath.replace(/\\/g, "/")}"></script>
       </body>
     </html>
   `;
@@ -103,7 +103,7 @@ export function loadAllPlugins(): void {
 }
 
 export function getLoadedPlugins(): PluginManifest[] {
-  return Array.from(loadedPlugins.values()).map(p => p.manifest);
+  return Array.from(loadedPlugins.values()).map((p) => p.manifest);
 }
 
 export function unloadPlugin(id: string): void {
@@ -117,7 +117,7 @@ export function unloadPlugin(id: string): void {
 
 export function registerPluginHandlers(): void {
   // We'll call loadAllPlugins() when the app is ready
-  
+
   ipcMain.handle("plugin:list", () => {
     return getLoadedPlugins();
   });
@@ -128,16 +128,16 @@ export function registerPluginHandlers(): void {
     log.info(`[PluginLoader] Install requested from: ${sourcePath}`);
     const folderName = path.basename(sourcePath);
     const destPath = path.join(PLUGINS_DIR, folderName);
-    
+
     if (sourcePath !== destPath) {
-        try {
-            fs.cpSync(sourcePath, destPath, { recursive: true });
-        } catch(e) {
-            log.error(`[PluginLoader] Failed to copy plugin from ${sourcePath} to ${destPath}`, e);
-            throw e;
-        }
+      try {
+        fs.cpSync(sourcePath, destPath, { recursive: true });
+      } catch (e) {
+        log.error(`[PluginLoader] Failed to copy plugin from ${sourcePath} to ${destPath}`, e);
+        throw e;
+      }
     }
-    
+
     loadPlugin(folderName);
     return true;
   });
@@ -147,36 +147,36 @@ export function registerPluginHandlers(): void {
     // Remove from disk (simplified)
     const pluginFolders = fs.readdirSync(PLUGINS_DIR);
     for (const folder of pluginFolders) {
-        const manifestPath = path.join(PLUGINS_DIR, folder, "manifest.json");
-        if (fs.existsSync(manifestPath)) {
-            const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
-            if (manifest.id === id) {
-                fs.rmSync(path.join(PLUGINS_DIR, folder), { recursive: true, force: true });
-                break;
-            }
+      const manifestPath = path.join(PLUGINS_DIR, folder, "manifest.json");
+      if (fs.existsSync(manifestPath)) {
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+        if (manifest.id === id) {
+          fs.rmSync(path.join(PLUGINS_DIR, folder), { recursive: true, force: true });
+          break;
         }
+      }
     }
     return true;
   });
-  
+
   ipcMain.handle("plugin:enable", (_, id: string) => {
-      // Find the folder and reload
-      const pluginFolders = fs.readdirSync(PLUGINS_DIR);
-      for (const folder of pluginFolders) {
-          const manifestPath = path.join(PLUGINS_DIR, folder, "manifest.json");
-          if (fs.existsSync(manifestPath)) {
-              const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
-              if (manifest.id === id) {
-                  loadPlugin(folder);
-                  break;
-              }
-          }
+    // Find the folder and reload
+    const pluginFolders = fs.readdirSync(PLUGINS_DIR);
+    for (const folder of pluginFolders) {
+      const manifestPath = path.join(PLUGINS_DIR, folder, "manifest.json");
+      if (fs.existsSync(manifestPath)) {
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+        if (manifest.id === id) {
+          loadPlugin(folder);
+          break;
+        }
       }
-      return true;
+    }
+    return true;
   });
 
   ipcMain.handle("plugin:disable", (_, id: string) => {
-      unloadPlugin(id);
-      return true;
+    unloadPlugin(id);
+    return true;
   });
 }

@@ -66,7 +66,11 @@ export interface IWindowsService {
    * Open a native save dialog.
    * Returns the chosen path, or null if cancelled.
    */
-  saveFile(opts?: { title?: string; defaultPath?: string; filters?: Array<{ name: string; extensions: string[] }> }): Promise<string | null>;
+  saveFile(opts?: {
+    title?: string;
+    defaultPath?: string;
+    filters?: Array<{ name: string; extensions: string[] }>;
+  }): Promise<string | null>;
 
   /**
    * Kill a process by PID. Protected system PIDs are rejected in the main process.

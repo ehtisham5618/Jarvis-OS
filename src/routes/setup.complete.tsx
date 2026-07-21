@@ -15,13 +15,15 @@ function CompleteStep() {
 
   const handleFinish = async () => {
     setBooting(true);
-    
+
     // Simulate boot sequence
-    await new Promise(r => setTimeout(r, 1500));
-    
+    await new Promise((r) => setTimeout(r, 1500));
+
     // Check AI status
     try {
-      const ai = serviceRegistry.resolve<import("@/services/interfaces/IAIService").IAIService>(ServiceToken.AI);
+      const ai = serviceRegistry.resolve<import("@/services/interfaces/IAIService").IAIService>(
+        ServiceToken.AI,
+      );
       await ai.isAvailable();
     } catch {
       // Ignore
@@ -55,7 +57,7 @@ function CompleteStep() {
           <div className="size-2 rounded-full bg-white/20" />
           <div className="size-2 rounded-full bg-[#4ade80]" />
         </div>
-        
+
         <button
           onClick={handleFinish}
           disabled={booting}

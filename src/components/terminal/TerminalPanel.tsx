@@ -26,11 +26,23 @@ function stripAnsi(str: string): string {
 
 // Commands that map to the backend allowlist
 const ALLOWED_PREFIXES = [
-  "git", "node", "npm", "npx", "yarn", "pnpm",
-  "python", "python3", "pip", "pip3",
-  "cargo", "rustc",
-  "code", "code-insiders",
-  "echo", "where", "which",
+  "git",
+  "node",
+  "npm",
+  "npx",
+  "yarn",
+  "pnpm",
+  "python",
+  "python3",
+  "pip",
+  "pip3",
+  "cargo",
+  "rustc",
+  "code",
+  "code-insiders",
+  "echo",
+  "where",
+  "which",
 ];
 
 function isAllowed(cmd: string): boolean {
@@ -41,7 +53,11 @@ function isAllowed(cmd: string): boolean {
 export function TerminalPanel() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState<OutputLine[]>([
-    { id: "welcome", type: "info", text: "Jarvis Terminal — sandboxed shell. Type `help` for allowed commands." },
+    {
+      id: "welcome",
+      type: "info",
+      text: "Jarvis Terminal — sandboxed shell. Type `help` for allowed commands.",
+    },
   ]);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIdx, setHistoryIdx] = useState(-1);
@@ -83,7 +99,10 @@ export function TerminalPanel() {
 
     // Allowlist check
     if (!isAllowed(trimmed)) {
-      appendLine({ type: "blocked", text: `BLOCKED: "${trimmed.split(/\s+/)[0]}" is not on the Jarvis allowlist.` });
+      appendLine({
+        type: "blocked",
+        text: `BLOCKED: "${trimmed.split(/\s+/)[0]}" is not on the Jarvis allowlist.`,
+      });
       return;
     }
 
@@ -131,11 +150,16 @@ export function TerminalPanel() {
 
   const lineColor = (type: OutputLine["type"]) => {
     switch (type) {
-      case "command": return "text-[#61c7ff]";
-      case "stderr":  return "text-red-400/90";
-      case "blocked": return "text-amber-400";
-      case "info":    return "text-white/40";
-      default:        return "text-white/80";
+      case "command":
+        return "text-[#61c7ff]";
+      case "stderr":
+        return "text-red-400/90";
+      case "blocked":
+        return "text-amber-400";
+      case "info":
+        return "text-white/40";
+      default:
+        return "text-white/80";
     }
   };
 
@@ -159,12 +183,18 @@ export function TerminalPanel() {
       >
         {output.map((line) => (
           <div key={line.id} className="flex items-start gap-2">
-            {line.type === "command" && <ChevronRight className="mt-0.5 size-3 shrink-0 text-[#61c7ff]" />}
-            {line.type === "blocked" && <ShieldX className="mt-0.5 size-3 shrink-0 text-amber-400" />}
+            {line.type === "command" && (
+              <ChevronRight className="mt-0.5 size-3 shrink-0 text-[#61c7ff]" />
+            )}
+            {line.type === "blocked" && (
+              <ShieldX className="mt-0.5 size-3 shrink-0 text-amber-400" />
+            )}
             {(line.type === "stdout" || line.type === "stderr" || line.type === "info") && (
               <span className="size-3 shrink-0" />
             )}
-            <span className={`leading-relaxed whitespace-pre-wrap break-all ${lineColor(line.type)}`}>
+            <span
+              className={`leading-relaxed whitespace-pre-wrap break-all ${lineColor(line.type)}`}
+            >
               {line.text}
             </span>
           </div>

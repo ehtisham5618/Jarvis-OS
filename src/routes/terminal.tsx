@@ -6,7 +6,10 @@ export const Route = createFileRoute("/terminal")({
   head: () => ({
     meta: [
       { title: "Terminal · Jarvis" },
-      { name: "description", content: "Sandboxed shell terminal inside the Jarvis desktop environment." },
+      {
+        name: "description",
+        content: "Sandboxed shell terminal inside the Jarvis desktop environment.",
+      },
     ],
   }),
   component: TerminalRoute,

@@ -48,7 +48,7 @@ export function ChatMessageList({ messages, isStreaming }: ChatMessageListProps)
   // Keep measuring the last item while it's streaming so virtualization adjusts
   const lastMessage = messages[messages.length - 1];
   const isLastStreaming = isStreaming && lastMessage?.role === "assistant";
-  
+
   useEffect(() => {
     if (isLastStreaming) {
       virtualizer.measure();
@@ -91,7 +91,7 @@ export function ChatMessageList({ messages, isStreaming }: ChatMessageListProps)
         className="h-full overflow-y-auto px-6 py-6"
         style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}
       >
-        <div 
+        <div
           className="mx-auto max-w-3xl relative"
           style={{ height: `${virtualizer.getTotalSize()}px` }}
         >
@@ -99,7 +99,7 @@ export function ChatMessageList({ messages, isStreaming }: ChatMessageListProps)
             const message = messages[virtualItem.index];
             const isLast = virtualItem.index === messages.length - 1;
             const streaming = isLast && isStreaming && message.role === "assistant";
-            
+
             return (
               <div
                 key={virtualItem.key}
@@ -109,10 +109,7 @@ export function ChatMessageList({ messages, isStreaming }: ChatMessageListProps)
                 style={{ transform: `translateY(${virtualItem.start}px)` }}
               >
                 <div className="pb-6">
-                  <ChatBubble
-                    message={message}
-                    isStreaming={streaming}
-                  />
+                  <ChatBubble message={message} isStreaming={streaming} />
                 </div>
               </div>
             );

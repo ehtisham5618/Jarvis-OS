@@ -5,24 +5,84 @@ import { Download, FileArchive, Film, Music, FileCode, Shield, Sparkles } from "
 
 export const Route = createFileRoute("/downloads")({
   head: () => ({
-    meta: [{ title: "Downloads · Jarvis" }, { name: "description", content: "Beautiful download manager with virus scanning and AI categorization." }],
+    meta: [
+      { title: "Downloads · Jarvis" },
+      {
+        name: "description",
+        content: "Beautiful download manager with virus scanning and AI categorization.",
+      },
+    ],
   }),
   component: Downloads,
 });
 
 const downloads = [
-  { name: "Blender-4.3.0-arm64.dmg", size: "312 MB", progress: 62, speed: "24.4 MB/s", eta: "4s", icon: FileArchive, color: "#61c7ff", category: "Creative", status: "downloading" },
-  { name: "llama3.1-70b-instruct-q4.gguf", size: "42.1 GB", progress: 88, speed: "112 MB/s", eta: "34s", icon: Sparkles, color: "#7b5cff", category: "AI Model", status: "downloading" },
-  { name: "wwdc26-keynote-4k.mp4", size: "8.4 GB", progress: 100, speed: "—", eta: "done", icon: Film, color: "#4ade80", category: "Video", status: "scanning" },
-  { name: "rust-analyzer-src.tar.gz", size: "18 MB", progress: 100, speed: "—", eta: "done", icon: FileCode, color: "#fbbf24", category: "Code", status: "safe" },
-  { name: "nightbook.flac", size: "42 MB", progress: 100, speed: "—", eta: "done", icon: Music, color: "#f87171", category: "Music", status: "safe" },
+  {
+    name: "Blender-4.3.0-arm64.dmg",
+    size: "312 MB",
+    progress: 62,
+    speed: "24.4 MB/s",
+    eta: "4s",
+    icon: FileArchive,
+    color: "#61c7ff",
+    category: "Creative",
+    status: "downloading",
+  },
+  {
+    name: "llama3.1-70b-instruct-q4.gguf",
+    size: "42.1 GB",
+    progress: 88,
+    speed: "112 MB/s",
+    eta: "34s",
+    icon: Sparkles,
+    color: "#7b5cff",
+    category: "AI Model",
+    status: "downloading",
+  },
+  {
+    name: "wwdc26-keynote-4k.mp4",
+    size: "8.4 GB",
+    progress: 100,
+    speed: "—",
+    eta: "done",
+    icon: Film,
+    color: "#4ade80",
+    category: "Video",
+    status: "scanning",
+  },
+  {
+    name: "rust-analyzer-src.tar.gz",
+    size: "18 MB",
+    progress: 100,
+    speed: "—",
+    eta: "done",
+    icon: FileCode,
+    color: "#fbbf24",
+    category: "Code",
+    status: "safe",
+  },
+  {
+    name: "nightbook.flac",
+    size: "42 MB",
+    progress: 100,
+    speed: "—",
+    eta: "done",
+    icon: Music,
+    color: "#f87171",
+    category: "Music",
+    status: "safe",
+  },
 ];
 
 function Downloads() {
   return (
     <Shell>
       <div className="mx-auto max-w-5xl px-12 py-16">
-        <PageHeader eyebrow="Download center" title="Downloads" subtitle="Scanned, categorized, and ready to install — before you double-click." />
+        <PageHeader
+          eyebrow="Download center"
+          title="Downloads"
+          subtitle="Scanned, categorized, and ready to install — before you double-click."
+        />
 
         <div className="mb-6 grid grid-cols-3 gap-4">
           <Stat label="In progress" value="2" color="#61c7ff" />
@@ -47,7 +107,9 @@ function Downloads() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <div className="truncate text-sm font-medium">{d.name}</div>
-                    <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[9px] uppercase tracking-widest text-muted-foreground">{d.category}</span>
+                    <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[9px] uppercase tracking-widest text-muted-foreground">
+                      {d.category}
+                    </span>
                   </div>
                   <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
                     <span>{d.size}</span>
@@ -80,7 +142,9 @@ function Downloads() {
                     />
                   </div>
                 </div>
-                <div className="w-10 text-right font-mono text-xs tabular-nums text-white/70">{d.progress}%</div>
+                <div className="w-10 text-right font-mono text-xs tabular-nums text-white/70">
+                  {d.progress}%
+                </div>
               </div>
             </div>
           ))}
@@ -95,7 +159,9 @@ function Stat({ label, value, color }: { label: string; value: string; color: st
   return (
     <div className="glass rounded-2xl p-5">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className="mt-2 text-2xl font-light tabular-nums" style={{ color }}>{value}</div>
+      <div className="mt-2 text-2xl font-light tabular-nums" style={{ color }}>
+        {value}
+      </div>
     </div>
   );
 }

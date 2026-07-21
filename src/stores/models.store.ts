@@ -33,8 +33,12 @@ export const useModelsStore = create<ModelsState>()((set, get) => ({
   fetchModels: async () => {
     set({ isLoading: true });
     try {
-      const modelService = serviceRegistry.resolve<import("@/services/interfaces/IModelService").IModelService>(ServiceToken.Model);
-      const systemService = serviceRegistry.resolve<import("@/services/interfaces/ISystemService").ISystemService>(ServiceToken.System);
+      const modelService = serviceRegistry.resolve<
+        import("@/services/interfaces/IModelService").IModelService
+      >(ServiceToken.Model);
+      const systemService = serviceRegistry.resolve<
+        import("@/services/interfaces/ISystemService").ISystemService
+      >(ServiceToken.System);
 
       const [rawModels, metrics] = await Promise.all([
         modelService.getModels(),
@@ -42,7 +46,7 @@ export const useModelsStore = create<ModelsState>()((set, get) => ({
       ]);
 
       // Compute suitability for each model
-      const models = rawModels.map(m => {
+      const models = rawModels.map((m) => {
         const result = computeSuitability(m, metrics);
         return {
           ...m,
@@ -62,15 +66,17 @@ export const useModelsStore = create<ModelsState>()((set, get) => ({
   installModel: async (id: string) => {
     set((state) => ({ installProgress: { ...state.installProgress, [id]: 0 } }));
     try {
-      const modelService = serviceRegistry.resolve<import("@/services/interfaces/IModelService").IModelService>(ServiceToken.Model);
+      const modelService = serviceRegistry.resolve<
+        import("@/services/interfaces/IModelService").IModelService
+      >(ServiceToken.Model);
       await modelService.installModel(id);
       set((state) => {
         const newProgress = { ...state.installProgress };
         delete newProgress[id];
         return {
           installProgress: newProgress,
-          models: state.models.map(m =>
-            m.id === id ? { ...m, installed: true, installedAt: new Date().toISOString() } : m
+          models: state.models.map((m) =>
+            m.id === id ? { ...m, installed: true, installedAt: new Date().toISOString() } : m,
           ),
         };
       });
@@ -87,10 +93,12 @@ export const useModelsStore = create<ModelsState>()((set, get) => ({
   // ─── Uninstall ────────────────────────────────────────────────────────────────
   uninstallModel: async (id: string) => {
     try {
-      const modelService = serviceRegistry.resolve<import("@/services/interfaces/IModelService").IModelService>(ServiceToken.Model);
+      const modelService = serviceRegistry.resolve<
+        import("@/services/interfaces/IModelService").IModelService
+      >(ServiceToken.Model);
       await modelService.uninstallModel(id);
       set((state) => ({
-        models: state.models.map(m => m.id === id ? { ...m, installed: false } : m),
+        models: state.models.map((m) => (m.id === id ? { ...m, installed: false } : m)),
       }));
     } catch (err) {
       log.error("Failed to uninstall model", { modelId: id, error: err });
@@ -99,7 +107,9 @@ export const useModelsStore = create<ModelsState>()((set, get) => ({
 
   // ─── Benchmark single model ───────────────────────────────────────────────────
   runBenchmark: async (modelId: string) => {
-    const aiService = serviceRegistry.resolve<import("@/services/interfaces/IAIService").IAIService>(ServiceToken.AI);
+    const aiService = serviceRegistry.resolve<
+      import("@/services/interfaces/IAIService").IAIService
+    >(ServiceToken.AI);
 
     set((state) => ({
       benchmarkProgress: {
@@ -116,7 +126,7 @@ export const useModelsStore = create<ModelsState>()((set, get) => ({
           set((state) => ({
             benchmarkProgress: { ...state.benchmarkProgress, [modelId]: progress },
           }));
-        }
+        },
       );
 
       set((state) => {
@@ -124,9 +134,7 @@ export const useModelsStore = create<ModelsState>()((set, get) => ({
         delete newProgress[modelId];
         return {
           benchmarkProgress: newProgress,
-          models: state.models.map(m =>
-            m.id === modelId ? { ...m, benchmark: result } : m
-          ),
+          models: state.models.map((m) => (m.id === modelId ? { ...m, benchmark: result } : m)),
         };
       });
 
@@ -144,7 +152,7 @@ export const useModelsStore = create<ModelsState>()((set, get) => ({
   // ─── Benchmark all installed models sequentially ──────────────────────────────
   runAllBenchmarks: async () => {
     const { models, runBenchmark: bench } = get();
-    const installed = models.filter(m => m.installed);
+    const installed = models.filter((m) => m.installed);
     for (const m of installed) {
       await bench(m.id);
     }

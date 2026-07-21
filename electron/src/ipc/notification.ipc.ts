@@ -33,6 +33,6 @@ export function registerNotificationHandlers(): void {
       });
 
       notification.show();
-    }
+    },
   );
 }

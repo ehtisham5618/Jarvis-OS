@@ -60,7 +60,7 @@ export const usePluginStore = create<PluginState>((set, get) => ({
           description: "Control Spotify playback directly from Jarvis.",
           author: "Jane Doe",
           version: "1.0.0",
-          downloadUrl: "https://example.com/spotify-plugin.zip"
+          downloadUrl: "https://example.com/spotify-plugin.zip",
         },
         {
           id: "com.example.github",
@@ -68,9 +68,9 @@ export const usePluginStore = create<PluginState>((set, get) => ({
           description: "View PRs and issues in Jarvis.",
           author: "John Smith",
           version: "0.9.5",
-          downloadUrl: "https://example.com/github-plugin.zip"
-        }
-      ]
+          downloadUrl: "https://example.com/github-plugin.zip",
+        },
+      ],
     });
   },
 
@@ -95,7 +95,7 @@ export const usePluginStore = create<PluginState>((set, get) => ({
     await ipc(() => window.jarvisOS.plugins.disable(id), undefined);
     // Real logic would track active vs inactive
     await get().loadInstalled();
-  }
+  },
 }));
 
 const MOCK_PLUGINS: PluginManifest[] = [
@@ -113,9 +113,9 @@ const MOCK_PLUGINS: PluginManifest[] = [
         {
           id: "summarize_clipboard",
           name: "Summarize Clipboard",
-          description: "Reads the clipboard and summarizes it."
-        }
-      ]
-    }
-  }
+          description: "Reads the clipboard and summarizes it.",
+        },
+      ],
+    },
+  },
 ];

@@ -14,10 +14,7 @@ import {
 function useTicker(base: number, jitter = 6) {
   const [v, setV] = useState(base);
   useEffect(() => {
-    const id = setInterval(
-      () => setV(base + Math.random() * jitter - jitter / 2),
-      1400,
-    );
+    const id = setInterval(() => setV(base + Math.random() * jitter - jitter / 2), 1400);
     return () => clearInterval(id);
   }, [base, jitter]);
   return Math.max(0, Math.min(100, v));
@@ -70,9 +67,7 @@ function Gauge({
         </div>
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-          {label}
-        </div>
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
         <div className="text-sm font-medium">
           {Math.round(value)}
           {unit}
@@ -87,11 +82,7 @@ function Sparkline({ color }: { color: string }) {
     Array.from({ length: 24 }, () => 30 + Math.random() * 40),
   );
   useEffect(() => {
-    const id = setInterval(
-      () =>
-        setPoints((p) => [...p.slice(1), 30 + Math.random() * 50]),
-      900,
-    );
+    const id = setInterval(() => setPoints((p) => [...p.slice(1), 30 + Math.random() * 50]), 900);
     return () => clearInterval(id);
   }, []);
   const d = points
@@ -200,9 +191,7 @@ export function WidgetsPanel() {
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
               Neural Engine
             </span>
-            <span className="text-[10px] font-mono text-[#61c7ff]">
-              Llama 3.1 · 70B
-            </span>
+            <span className="text-[10px] font-mono text-[#61c7ff]">Llama 3.1 · 70B</span>
           </div>
           <Sparkline color="#61c7ff" />
         </div>
@@ -235,9 +224,7 @@ export function WidgetsPanel() {
               key={e.time}
               className="flex items-start gap-3 rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.05] transition hover:bg-white/[0.05]"
             >
-              <span className="mt-0.5 text-[11px] font-mono text-[#61c7ff]">
-                {e.time}
-              </span>
+              <span className="mt-0.5 text-[11px] font-mono text-[#61c7ff]">{e.time}</span>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-xs font-medium">{e.title}</div>
                 <div className="text-[10px] text-muted-foreground">{e.tag}</div>
@@ -285,9 +272,7 @@ export function WidgetsPanel() {
             >
               <d.icon className="size-3.5 text-muted-foreground" />
               <span className="flex-1 text-xs">{d.name}</span>
-              <span className="font-mono text-[10px] text-muted-foreground">
-                {d.meta}
-              </span>
+              <span className="font-mono text-[10px] text-muted-foreground">{d.meta}</span>
             </div>
           ))}
         </div>

@@ -10,11 +10,11 @@ import type { AutonomyLevel } from "@/services/interfaces/IUserService";
 export interface CapabilityContext {
   /** The unique ID of the intent or automation that triggered this */
   traceId: string;
-  
+
   /** The current autonomy level of the user */
   autonomyLevel: AutonomyLevel;
 
-  /** 
+  /**
    * Indicates if this execution is running in a sandbox.
    * Sandboxed executions cannot mutate real OS state.
    */

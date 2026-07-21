@@ -46,9 +46,7 @@ function WelcomeStep() {
         </div>
       </div>
 
-      <h1 className="mb-4 text-4xl font-light tracking-tight text-gradient">
-        Welcome to Jarvis
-      </h1>
+      <h1 className="mb-4 text-4xl font-light tracking-tight text-gradient">Welcome to Jarvis</h1>
       <p className="mb-10 text-lg text-muted-foreground">
         The intelligence of your computer. <br />
         Let's configure your desktop environment.

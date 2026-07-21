@@ -110,11 +110,14 @@ export function scheduleUpdateChecks(mainWindow: BrowserWindow | null): void {
   }, 5000);
 
   // Recurring check every 4 hours
-  setInterval(async () => {
-    try {
-      await autoUpdater.checkForUpdates();
-    } catch {
-      // Silently fail
-    }
-  }, 4 * 60 * 60 * 1000);
+  setInterval(
+    async () => {
+      try {
+        await autoUpdater.checkForUpdates();
+      } catch {
+        // Silently fail
+      }
+    },
+    4 * 60 * 60 * 1000,
+  );
 }

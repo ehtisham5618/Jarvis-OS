@@ -20,9 +20,12 @@ async function triggerBackgroundSummarization(threadId: string) {
   const store = useAIStore.getState();
   const thread = store.threads[threadId];
   if (!thread || thread.messages.length < 4) return;
-  
+
   // Get last 4 messages
-  const recent = thread.messages.slice(-4).map(m => `${m.role}: ${m.content}`).join("\n");
+  const recent = thread.messages
+    .slice(-4)
+    .map((m) => `${m.role}: ${m.content}`)
+    .join("\n");
   const aiService = serviceRegistry.resolve<IAIService>(ServiceToken.AI);
   const memService = serviceRegistry.resolve<any>(ServiceToken.Memory);
 
@@ -30,23 +33,28 @@ async function triggerBackgroundSummarization(threadId: string) {
     if (!(await memService.isAvailable())) return;
 
     const summaryPrompt = `Summarize the following conversation snippet in one concise sentence to serve as a long-term memory for an AI assistant. Focus on facts, preferences, or project details. Do not use conversational filler, just give the fact.\n\n${recent}`;
-    
+
     let summary = "";
     const stream = aiService.chat(
-      { id: "sum", messages: [{ id: "1", role: "user", content: summaryPrompt, timestamp: "" }], createdAt: "", updatedAt: "" },
-      { model: store.activeModel }
+      {
+        id: "sum",
+        messages: [{ id: "1", role: "user", content: summaryPrompt, timestamp: "" }],
+        createdAt: "",
+        updatedAt: "",
+      },
+      { model: store.activeModel },
     );
-    
+
     for await (const chunk of stream) {
       summary += chunk.token;
     }
-    
+
     if (summary.trim()) {
       await memService.store({
         content: summary.trim(),
         source: "conversation",
         threadId,
-        tags: ["auto-summary"]
+        tags: ["auto-summary"],
       });
       log.info(`Background memory saved for thread ${threadId}`);
     }
@@ -234,12 +242,22 @@ export const useAIStore = create<AIState>()(
             if (await memService.isAvailable()) {
               const memories = await memService.search(content, 3);
               if (memories.length > 0) {
-                const contextBlock = `[Relevant Memory Context]:\n` + memories.map((m: any) => `- ${m.content}`).join("\n");
+                const contextBlock =
+                  `[Relevant Memory Context]:\n` +
+                  memories.map((m: any) => `- ${m.content}`).join("\n");
                 const firstMsg = messagesForContext[0];
                 if (firstMsg.role === "system") {
-                  messagesForContext[0] = { ...firstMsg, content: firstMsg.content + "\n\n" + contextBlock };
+                  messagesForContext[0] = {
+                    ...firstMsg,
+                    content: firstMsg.content + "\n\n" + contextBlock,
+                  };
                 } else {
-                  messagesForContext.unshift({ id: "sys", role: "system", content: contextBlock, timestamp: new Date().toISOString() });
+                  messagesForContext.unshift({
+                    id: "sys",
+                    role: "system",
+                    content: contextBlock,
+                    timestamp: new Date().toISOString(),
+                  });
                 }
                 log.info("Injected memory context into prompt.");
               }
@@ -296,8 +314,12 @@ export const useAIStore = create<AIState>()(
             if (finalThread) {
               const lastMsg = finalThread.messages[finalThread.messages.length - 1];
               if (lastMsg && lastMsg.role === "assistant" && lastMsg.content) {
-                const voiceService = serviceRegistry.resolve<import("@/services/interfaces/IVoiceService").IVoiceService>(ServiceToken.Voice);
-                voiceService.speak(lastMsg.content).catch(err => log.warn("TTS failed", { error: err }));
+                const voiceService = serviceRegistry.resolve<
+                  import("@/services/interfaces/IVoiceService").IVoiceService
+                >(ServiceToken.Voice);
+                voiceService
+                  .speak(lastMsg.content)
+                  .catch((err) => log.warn("TTS failed", { error: err }));
               }
             }
           }
@@ -309,7 +331,7 @@ export const useAIStore = create<AIState>()(
           set({ isStreaming: false });
           // Trigger summarization safely in background
           if (activeThreadId) {
-             triggerBackgroundSummarization(activeThreadId).catch(console.error);
+            triggerBackgroundSummarization(activeThreadId).catch(console.error);
           }
         }
       },
@@ -322,6 +344,6 @@ export const useAIStore = create<AIState>()(
         activeThreadId: state.activeThreadId,
         activeModel: state.activeModel,
       }),
-    }
-  )
+    },
+  ),
 );

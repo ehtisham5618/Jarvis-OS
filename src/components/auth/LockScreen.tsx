@@ -11,9 +11,9 @@ function sha256(text: string): string {
 }
 
 export function LockScreen({ onUnlocked }: LockScreenProps) {
-  const [pin, setPin]               = useState<string[]>([]);
-  const [error, setError]           = useState<string>("");
-  const [shake, setShake]           = useState(false);
+  const [pin, setPin] = useState<string[]>([]);
+  const [error, setError] = useState<string>("");
+  const [shake, setShake] = useState(false);
   const [lockoutSecs, setLockoutSecs] = useState(0);
   const [helloLoading, setHelloLoading] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -39,29 +39,34 @@ export function LockScreen({ onUnlocked }: LockScreenProps) {
     setTimeout(() => setShake(false), 600);
   };
 
-  const submitPin = useCallback(async (digits: string[]) => {
-    if (lockoutSecs > 0) return;
-    const pinStr = digits.join("");
-    const hasElectron = typeof window !== "undefined" && window.jarvisOS?.auth;
+  const submitPin = useCallback(
+    async (digits: string[]) => {
+      if (lockoutSecs > 0) return;
+      const pinStr = digits.join("");
+      const hasElectron = typeof window !== "undefined" && window.jarvisOS?.auth;
 
-    if (hasElectron) {
-      const res = await window.jarvisOS.auth.unlockPin(pinStr);
-      if (res.success) {
-        onUnlocked();
-      } else if (res.reason === "locked_out") {
-        setLockoutSecs(res.secsLeft ?? 30);
-        setError(`Too many attempts. Wait ${res.secsLeft}s.`);
-        triggerShake();
+      if (hasElectron) {
+        const res = await window.jarvisOS.auth.unlockPin(pinStr);
+        if (res.success) {
+          onUnlocked();
+        } else if (res.reason === "locked_out") {
+          setLockoutSecs(res.secsLeft ?? 30);
+          setError(`Too many attempts. Wait ${res.secsLeft}s.`);
+          triggerShake();
+        } else {
+          setError(
+            `Wrong PIN. ${res.attemptsLeft} attempt${res.attemptsLeft !== 1 ? "s" : ""} left.`,
+          );
+          triggerShake();
+        }
       } else {
-        setError(`Wrong PIN. ${res.attemptsLeft} attempt${res.attemptsLeft !== 1 ? "s" : ""} left.`);
-        triggerShake();
+        // Browser dev mode: any 6-digit PIN works
+        onUnlocked();
       }
-    } else {
-      // Browser dev mode: any 6-digit PIN works
-      onUnlocked();
-    }
-    setPin([]);
-  }, [lockoutSecs, onUnlocked]);
+      setPin([]);
+    },
+    [lockoutSecs, onUnlocked],
+  );
 
   const handleDigit = (d: string) => {
     if (lockoutSecs > 0) return;
@@ -94,7 +99,7 @@ export function LockScreen({ onUnlocked }: LockScreenProps) {
     setHelloLoading(false);
   };
 
-  const digits = ["1","2","3","4","5","6","7","8","9","","0","⌫"];
+  const digits = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"];
 
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#020408]">
@@ -105,7 +110,9 @@ export function LockScreen({ onUnlocked }: LockScreenProps) {
       </div>
 
       {/* Card */}
-      <div className={`relative z-10 flex flex-col items-center gap-8 ${shake ? "animate-shake" : ""}`}>
+      <div
+        className={`relative z-10 flex flex-col items-center gap-8 ${shake ? "animate-shake" : ""}`}
+      >
         {/* Logo + Lock indicator */}
         <div className="flex flex-col items-center gap-3">
           <div className="grid size-20 place-items-center rounded-3xl border border-white/[0.06] bg-white/[0.03] shadow-[0_0_60px_-10px_rgba(79,125,255,0.3)]">

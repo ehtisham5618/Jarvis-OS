@@ -6,15 +6,17 @@ const log = Logger.for("automation.store");
 
 interface AutomationState {
   automations: Automation[];
-  isLoading:   boolean;
-  runningId:   string | null;
+  isLoading: boolean;
+  runningId: string | null;
 
-  loadAll():                                    Promise<void>;
-  create(a: Omit<Automation, "id" | "runCount" | "lastRanAt" | "lastStatus" | "createdAt">): Promise<string>;
+  loadAll(): Promise<void>;
+  create(
+    a: Omit<Automation, "id" | "runCount" | "lastRanAt" | "lastStatus" | "createdAt">,
+  ): Promise<string>;
   update(id: string, partial: Partial<Automation>): Promise<void>;
-  remove(id: string):                            Promise<void>;
-  run(id: string):                               Promise<AutomationRunResult>;
-  toggle(id: string, enabled: boolean):          Promise<void>;
+  remove(id: string): Promise<void>;
+  run(id: string): Promise<AutomationRunResult>;
+  toggle(id: string, enabled: boolean): Promise<void>;
 }
 
 const isBrowser = typeof window !== "undefined" && !("jarvisOS" in window);
@@ -32,8 +34,8 @@ async function ipc<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 
 export const useAutomationStore = create<AutomationState>((set, get) => ({
   automations: [],
-  isLoading:   false,
-  runningId:   null,
+  isLoading: false,
+  runningId: null,
 
   async loadAll() {
     set({ isLoading: true });
@@ -51,7 +53,7 @@ export const useAutomationStore = create<AutomationState>((set, get) => ({
   async update(id, partial) {
     await ipc(() => window.jarvisOS.automation.update(id, partial), undefined);
     set((state) => ({
-      automations: state.automations.map((a) => a.id === id ? { ...a, ...partial } : a),
+      automations: state.automations.map((a) => (a.id === id ? { ...a, ...partial } : a)),
     }));
   },
 
@@ -62,14 +64,23 @@ export const useAutomationStore = create<AutomationState>((set, get) => ({
 
   async run(id) {
     set({ runningId: id });
-    const result = await ipc(
-      () => window.jarvisOS.automation.run(id),
-      { success: true, executedAt: new Date().toISOString(), durationMs: 500, actionsRun: 1 }
-    );
+    const result = await ipc(() => window.jarvisOS.automation.run(id), {
+      success: true,
+      executedAt: new Date().toISOString(),
+      durationMs: 500,
+      actionsRun: 1,
+    });
     set((state) => ({
       runningId: null,
       automations: state.automations.map((a) =>
-        a.id === id ? { ...a, runCount: a.runCount + 1, lastRanAt: result.executedAt, lastStatus: result.success ? "success" : "failed" } : a
+        a.id === id
+          ? {
+              ...a,
+              runCount: a.runCount + 1,
+              lastRanAt: result.executedAt,
+              lastStatus: result.success ? "success" : "failed",
+            }
+          : a,
       ),
     }));
     return result;
@@ -78,7 +89,7 @@ export const useAutomationStore = create<AutomationState>((set, get) => ({
   async toggle(id, enabled) {
     await ipc(() => window.jarvisOS.automation.toggle(id, enabled), undefined);
     set((state) => ({
-      automations: state.automations.map((a) => a.id === id ? { ...a, enabled } : a),
+      automations: state.automations.map((a) => (a.id === id ? { ...a, enabled } : a)),
     }));
   },
 }));
@@ -93,8 +104,14 @@ const MOCK_AUTOMATIONS: Automation[] = [
     enabled: false,
     trigger: { type: "schedule", cron: "0 9 * * *" },
     conditions: [],
-    actions: [{ type: "shell_exec", command: "git", args: ["pull"] }, { type: "show_notification", title: "Jarvis", body: "Git pull done ✓" }],
-    runCount: 0, lastRanAt: null, lastStatus: null, createdAt: new Date().toISOString(),
+    actions: [
+      { type: "shell_exec", command: "git", args: ["pull"] },
+      { type: "show_notification", title: "Jarvis", body: "Git pull done ✓" },
+    ],
+    runCount: 0,
+    lastRanAt: null,
+    lastStatus: null,
+    createdAt: new Date().toISOString(),
   },
   {
     id: "mock-2",
@@ -103,8 +120,14 @@ const MOCK_AUTOMATIONS: Automation[] = [
     enabled: true,
     trigger: { type: "schedule", cron: "0 8 * * *" },
     conditions: [],
-    actions: [{ type: "ai_request", prompt: "Give me my morning briefing", outputVar: "briefing" }, { type: "show_notification", title: "Morning Briefing", body: "Ready in Jarvis" }],
-    runCount: 42, lastRanAt: new Date(Date.now() - 86400000).toISOString(), lastStatus: "success", createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+    actions: [
+      { type: "ai_request", prompt: "Give me my morning briefing", outputVar: "briefing" },
+      { type: "show_notification", title: "Morning Briefing", body: "Ready in Jarvis" },
+    ],
+    runCount: 42,
+    lastRanAt: new Date(Date.now() - 86400000).toISOString(),
+    lastStatus: "success",
+    createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
   },
   {
     id: "mock-3",
@@ -113,8 +136,14 @@ const MOCK_AUTOMATIONS: Automation[] = [
     enabled: false,
     trigger: { type: "clipboard_contains", pattern: "translate:" },
     conditions: [],
-    actions: [{ type: "ai_request", prompt: "Translate: {{clipboard}}", outputVar: "translation" }, { type: "clipboard_write", content: "{{translation}}" }],
-    runCount: 7, lastRanAt: new Date(Date.now() - 3600000).toISOString(), lastStatus: "success", createdAt: new Date().toISOString(),
+    actions: [
+      { type: "ai_request", prompt: "Translate: {{clipboard}}", outputVar: "translation" },
+      { type: "clipboard_write", content: "{{translation}}" },
+    ],
+    runCount: 7,
+    lastRanAt: new Date(Date.now() - 3600000).toISOString(),
+    lastStatus: "success",
+    createdAt: new Date().toISOString(),
   },
   {
     id: "mock-4",
@@ -123,7 +152,13 @@ const MOCK_AUTOMATIONS: Automation[] = [
     enabled: true,
     trigger: { type: "hotkey", keys: ["Ctrl", "Alt", "F"] },
     conditions: [],
-    actions: [{ type: "navigate", route: "/chat" }, { type: "show_notification", title: "Focus Mode", body: "Distractions minimized." }],
-    runCount: 15, lastRanAt: new Date().toISOString(), lastStatus: "success", createdAt: new Date().toISOString(),
+    actions: [
+      { type: "navigate", route: "/chat" },
+      { type: "show_notification", title: "Focus Mode", body: "Distractions minimized." },
+    ],
+    runCount: 15,
+    lastRanAt: new Date().toISOString(),
+    lastStatus: "success",
+    createdAt: new Date().toISOString(),
   },
 ];

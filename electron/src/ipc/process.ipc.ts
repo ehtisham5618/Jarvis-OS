@@ -33,13 +33,27 @@ export function registerProcessHandlers(): void {
   ipcMain.handle(IpcChannels.ENV_GET, async (_evt, key: string) => {
     // Allowlist of readable env vars
     const ALLOWED_ENV_KEYS = new Set([
-      "USERPROFILE", "USERNAME", "HOME", "APPDATA", "LOCALAPPDATA",
-      "TEMP", "TMP", "COMPUTERNAME", "OS", "PROCESSOR_ARCHITECTURE",
-      "NUMBER_OF_PROCESSORS", "SYSTEMDRIVE", "WINDIR", "PATH",
-      "NODE_ENV", "NODE_VERSION",
+      "USERPROFILE",
+      "USERNAME",
+      "HOME",
+      "APPDATA",
+      "LOCALAPPDATA",
+      "TEMP",
+      "TMP",
+      "COMPUTERNAME",
+      "OS",
+      "PROCESSOR_ARCHITECTURE",
+      "NUMBER_OF_PROCESSORS",
+      "SYSTEMDRIVE",
+      "WINDIR",
+      "PATH",
+      "NODE_ENV",
+      "NODE_VERSION",
     ]);
     if (!ALLOWED_ENV_KEYS.has(key.toUpperCase())) {
-      throw new Error(`ENV_ACCESS_DENIED: "${key}" is not on the readable environment variable allowlist.`);
+      throw new Error(
+        `ENV_ACCESS_DENIED: "${key}" is not on the readable environment variable allowlist.`,
+      );
     }
     return process.env[key] ?? null;
   });

@@ -8,7 +8,7 @@
 export const CpuThresholds = {
   warningPercent: 75,
   criticalPercent: 90,
-  sustainedWarningMs: 30_000,  // Warn after sustained high usage for 30s
+  sustainedWarningMs: 30_000, // Warn after sustained high usage for 30s
 } as const;
 
 export const GpuThresholds = {

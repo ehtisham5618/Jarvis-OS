@@ -60,7 +60,7 @@ export function ModelSelector() {
                 Select Model
               </span>
             </div>
-            
+
             <div className="max-h-64 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
               {models.map((m) => (
                 <button

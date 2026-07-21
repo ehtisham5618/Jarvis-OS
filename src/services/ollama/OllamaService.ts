@@ -31,10 +31,7 @@ export class OllamaService implements IAIService {
     }
   }
 
-  async *chat(
-    thread: ChatThread,
-    options: ChatOptions,
-  ): AsyncIterable<StreamToken> {
+  async *chat(thread: ChatThread, options: ChatOptions): AsyncIterable<StreamToken> {
     const isUp = await this.isAvailable();
     if (!isUp) {
       throw new ServiceUnavailableError("Ollama");
@@ -42,7 +39,7 @@ export class OllamaService implements IAIService {
 
     const request: OllamaChatRequest = {
       model: options.model,
-      messages: thread.messages.map(m => ({
+      messages: thread.messages.map((m) => ({
         role: m.role,
         content: m.content,
       })),
@@ -66,7 +63,9 @@ export class OllamaService implements IAIService {
         body: JSON.stringify(request),
       });
     } catch (err) {
-      throw new ServiceError("Failed to connect to Ollama for chat", "Ollama", { cause: err as Error });
+      throw new ServiceError("Failed to connect to Ollama for chat", "Ollama", {
+        cause: err as Error,
+      });
     }
 
     if (!response.ok || !response.body) {
@@ -85,7 +84,7 @@ export class OllamaService implements IAIService {
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
-        
+
         // Keep the last partial line in the buffer
         buffer = lines.pop() ?? "";
 
@@ -94,14 +93,16 @@ export class OllamaService implements IAIService {
 
           try {
             const chunk = JSON.parse(line) as OllamaChatResponseChunk;
-            
+
             yield {
               token: chunk.message.content,
               isFinal: chunk.done,
-              ...(chunk.done ? {
-                totalTokens: chunk.eval_count,
-                latencyMs: performance.now() - startTime
-              } : {})
+              ...(chunk.done
+                ? {
+                    totalTokens: chunk.eval_count,
+                    latencyMs: performance.now() - startTime,
+                  }
+                : {}),
             };
           } catch (e) {
             log.warn("Failed to parse Ollama chunk", { line, error: e });
@@ -120,7 +121,7 @@ export class OllamaService implements IAIService {
     return {
       intent: "general",
       confidence: 0.8,
-      requiredCapabilities: ["ai.chat"]
+      requiredCapabilities: ["ai.chat"],
     };
   }
 
@@ -147,7 +148,7 @@ export class OllamaService implements IAIService {
       if (!response.ok) return [];
 
       const data = (await response.json()) as OllamaTagsResponse;
-      return data.models.map(m => m.name);
+      return data.models.map((m) => m.name);
     } catch {
       return [];
     }

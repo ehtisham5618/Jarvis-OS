@@ -26,24 +26,31 @@ interface AutomationCardProps {
 function triggerSummary(a: Automation): { icon: React.ElementType; label: string } {
   const t = a.trigger;
   switch (t.type) {
-    case "schedule":          return { icon: Clock,      label: `Cron: ${t.cron}` };
-    case "hotkey":            return { icon: Keyboard,   label: t.keys.join(" + ") };
-    case "file_change":       return { icon: FolderOpen, label: `${t.event} in ${t.path}` };
-    case "clipboard_contains":return { icon: Clipboard,  label: `Clipboard contains "${t.pattern}"` };
-    case "process_start":     return { icon: Zap,        label: `${t.processName} starts` };
-    case "ai_prompt":         return { icon: Zap,        label: `Matches: "${t.match}"` };
-    default:                  return { icon: Zap,        label: "Custom trigger" };
+    case "schedule":
+      return { icon: Clock, label: `Cron: ${t.cron}` };
+    case "hotkey":
+      return { icon: Keyboard, label: t.keys.join(" + ") };
+    case "file_change":
+      return { icon: FolderOpen, label: `${t.event} in ${t.path}` };
+    case "clipboard_contains":
+      return { icon: Clipboard, label: `Clipboard contains "${t.pattern}"` };
+    case "process_start":
+      return { icon: Zap, label: `${t.processName} starts` };
+    case "ai_prompt":
+      return { icon: Zap, label: `Matches: "${t.match}"` };
+    default:
+      return { icon: Zap, label: "Custom trigger" };
   }
 }
 
 /** Trigger accent color */
 const TRIGGER_COLORS: Record<string, string> = {
-  schedule:          "#61c7ff",
-  hotkey:            "#7b5cff",
-  file_change:       "#4ade80",
-  clipboard_contains:"#fbbf24",
-  process_start:     "#f97316",
-  ai_prompt:         "#c084fc",
+  schedule: "#61c7ff",
+  hotkey: "#7b5cff",
+  file_change: "#4ade80",
+  clipboard_contains: "#fbbf24",
+  process_start: "#f97316",
+  ai_prompt: "#c084fc",
 };
 
 export function AutomationCard({ automation, onEdit }: AutomationCardProps) {
@@ -66,7 +73,11 @@ export function AutomationCard({ automation, onEdit }: AutomationCardProps) {
   return (
     <div
       className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 transition-all hover:border-white/[0.12] hover:bg-white/[0.04]"
-      style={{ boxShadow: automation.enabled ? `0 0 0 1px ${accent}10, inset 0 0 40px ${accent}05` : undefined }}
+      style={{
+        boxShadow: automation.enabled
+          ? `0 0 0 1px ${accent}10, inset 0 0 40px ${accent}05`
+          : undefined,
+      }}
     >
       {/* Status strip */}
       <div
@@ -94,17 +105,23 @@ export function AutomationCard({ automation, onEdit }: AutomationCardProps) {
           </p>
 
           {/* Trigger badge */}
-          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-medium"
-            style={{ borderColor: `${accent}30`, background: `${accent}10`, color: accent }}>
+          <div
+            className="mb-3 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-medium"
+            style={{ borderColor: `${accent}30`, background: `${accent}10`, color: accent }}
+          >
             <TriggerIcon className="size-3" />
             {label}
           </div>
 
           {/* Stats */}
           <div className="flex items-center gap-4 text-[10px] text-white/30">
-            <span>{automation.actions.length} action{automation.actions.length !== 1 ? "s" : ""}</span>
+            <span>
+              {automation.actions.length} action{automation.actions.length !== 1 ? "s" : ""}
+            </span>
             <ChevronRight className="size-2.5" />
-            <span>{automation.runCount} run{automation.runCount !== 1 ? "s" : ""}</span>
+            <span>
+              {automation.runCount} run{automation.runCount !== 1 ? "s" : ""}
+            </span>
             {automation.lastRanAt && (
               <>
                 <ChevronRight className="size-2.5" />
@@ -126,9 +143,11 @@ export function AutomationCard({ automation, onEdit }: AutomationCardProps) {
             }`}
             title={automation.enabled ? "Disable" : "Enable"}
           >
-            <span className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-all duration-300 ${
-              automation.enabled ? "left-[22px]" : "left-0.5"
-            }`} />
+            <span
+              className={`absolute top-0.5 size-5 rounded-full bg-white shadow transition-all duration-300 ${
+                automation.enabled ? "left-[22px]" : "left-0.5"
+              }`}
+            />
           </button>
 
           {/* Action buttons */}
@@ -139,7 +158,11 @@ export function AutomationCard({ automation, onEdit }: AutomationCardProps) {
               className="grid size-7 place-items-center rounded-lg border border-white/[0.06] text-white/40 transition hover:border-white/20 hover:text-white disabled:opacity-40"
               title="Run now"
             >
-              {isRunning ? <Loader className="size-3.5 animate-spin" /> : <Play className="size-3.5 fill-current" />}
+              {isRunning ? (
+                <Loader className="size-3.5 animate-spin" />
+              ) : (
+                <Play className="size-3.5 fill-current" />
+              )}
             </button>
             <button
               onClick={() => onEdit(automation)}
