@@ -114,7 +114,7 @@ function Automations() {
 
   useEffect(() => {
     loadAll();
-  }, []);
+  }, [loadAll]);
 
   const enabled = automations.filter((a) => a.enabled);
   const disabled = automations.filter((a) => !a.enabled);

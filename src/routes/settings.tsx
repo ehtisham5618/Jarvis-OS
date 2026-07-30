@@ -76,7 +76,7 @@ function Settings() {
 
   useEffect(() => {
     query({ limit: 50 });
-  }, []);
+  }, [query]);
 
   const handleExport = async () => {
     const json = await exportLog();

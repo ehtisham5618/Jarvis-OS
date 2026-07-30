@@ -32,7 +32,7 @@ function Developer() {
   useEffect(() => {
     loadInstalled();
     loadMarketplace();
-  }, []);
+  }, [loadInstalled, loadMarketplace]);
 
   const handleLoadUnpacked = async () => {
     if (typeof window !== "undefined" && window.jarvisOS) {

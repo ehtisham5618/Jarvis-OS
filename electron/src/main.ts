@@ -14,7 +14,7 @@ import windowStateKeeper from "electron-window-state";
 import log from "electron-log";
 import * as fs from "fs";
 import * as net from "net";
-import { ChildProcess } from "child_process";
+import { ChildProcess, spawn } from "child_process";
 import { registerCriticalHandlers, registerDeferredHandlers } from "./ipc/index";
 import { IpcChannels } from "./ipc/channels";
 import { registerUpdaterHandlers, scheduleUpdateChecks } from "./ipc/updater.ipc";
@@ -321,7 +321,6 @@ app.whenReady().then(() => {
         // Use spawn with node (process.execPath is the node bundled in Electron)
         // This correctly handles ESM .mjs files outside of the ASAR archive
         await new Promise<void>((resolve, reject) => {
-          const { spawn } = require("child_process");
           nitroServer = spawn(process.execPath, [serverNativePath], {
             env: {
               ...process.env,
