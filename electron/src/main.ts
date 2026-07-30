@@ -326,6 +326,7 @@ app.whenReady().then(() => {
               ...process.env,
               NITRO_PORT: prodServerPort!.toString(),
               NITRO_HOST: "127.0.0.1",
+              ELECTRON_RUN_AS_NODE: "1",
             },
             stdio: "pipe",
             detached: false,
