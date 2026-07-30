@@ -120,7 +120,12 @@ function createWindow(): void {
   } else {
     const url = `http://127.0.0.1:${prodServerPort}`;
     log.info(`[main] Production mode: loading Nitro server at ${url}`);
-    mainWindow.loadURL(url);
+    // Use a simple loading page until the server port is confirmed ready
+    mainWindow.loadURL("data:text/html,<html><body style='background:#050608'></body></html>");
+    // The actual URL will be loaded by startApp() once the server is ready
+    mainWindow.webContents.once("did-finish-load", () => {
+      if (prodServerPort) mainWindow?.loadURL(url);
+    });
   }
 
   // ─── Window Events ────────────────────────────────────────────────────
@@ -306,6 +311,15 @@ app.whenReady().then(() => {
 
   // M12: Start production server if not in dev mode
   const startApp = async () => {
+    // Create window immediately so the app feels responsive
+    createWindow();
+    createTray();
+    registerGlobalShortcut();
+
+    // M12: Register auto-updater after window is created
+    registerUpdaterHandlers(mainWindow!);
+    scheduleUpdateChecks(mainWindow!);
+
     if (!isDev) {
       try {
         prodServerPort = await getFreePort();
@@ -319,7 +333,7 @@ app.whenReady().then(() => {
         log.info(`[main] Spawning Nitro server: ${serverNativePath}`);
 
         // Use spawn with node (process.execPath is the node bundled in Electron)
-        // This correctly handles ESM .mjs files outside of the ASAR archive
+        // ELECTRON_RUN_AS_NODE prevents a fork bomb — it makes Electron behave as pure Node
         await new Promise<void>((resolve, reject) => {
           nitroServer = spawn(process.execPath, [serverNativePath], {
             env: {
@@ -350,17 +364,15 @@ app.whenReady().then(() => {
         });
 
         log.info(`[main] Nitro server ready on port ${prodServerPort}`);
+
+        // Now load the real app URL into the already-open window
+        const url = `http://127.0.0.1:${prodServerPort}`;
+        log.info(`[main] Production mode: loading Nitro server at ${url}`);
+        mainWindow?.loadURL(url);
       } catch (err) {
         log.error("[main] Failed to start production server:", err);
       }
     }
-    createWindow();
-    createTray();
-    registerGlobalShortcut();
-
-    // M12: Register auto-updater after window is created
-    registerUpdaterHandlers(mainWindow!);
-    scheduleUpdateChecks(mainWindow!);
   };
 
   startApp();

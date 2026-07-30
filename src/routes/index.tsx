@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Shell } from "@/components/desktop/Shell";
 import { useUserStore } from "@/stores/user.store";
 import { useAIStore } from "@/stores/ai.store";
+import { useSystemStore } from "@/stores/system.store";
 import {
   Mic,
   ArrowUp,
@@ -17,6 +18,9 @@ import {
   MessageSquare,
   Wifi,
   WifiOff,
+  Cpu,
+  MemoryStick,
+  HardDrive,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -45,6 +49,7 @@ function Home() {
     providerStatus,
     checkProviderStatus,
   } = useAIStore();
+  const { metrics, startPolling, stopPolling } = useSystemStore();
   const [inputValue, setInputValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hour = new Date().getHours();
@@ -52,6 +57,8 @@ function Home() {
 
   useEffect(() => {
     checkProviderStatus();
+    startPolling(3000);
+    return () => stopPolling();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-resize textarea
@@ -317,15 +324,42 @@ function Home() {
           className="grid grid-cols-2 gap-4 animate-fade-in"
           style={{ animationDelay: "340ms" }}
         >
+          {/* Live activities — real system data */}
           <div className="glass rounded-2xl p-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                Live activities
+                Live system
               </h3>
-              <span className="text-[10px] font-mono text-[#4ade80]">3 running</span>
+              <span className="text-[10px] font-mono text-[#4ade80]">
+                {metrics ? "live" : "loading…"}
+              </span>
             </div>
             <div className="space-y-3">
-              {activities.map((a) => (
+              {[
+                {
+                  icon: Cpu,
+                  title: "CPU",
+                  sub: metrics?.cpu.model?.split(" ").slice(0, 3).join(" ") ?? "Loading…",
+                  pct: metrics?.cpu.usagePercent ?? 0,
+                  color: "#61c7ff",
+                },
+                {
+                  icon: MemoryStick,
+                  title: "Memory",
+                  sub: metrics ? `${metrics.ram.usedGB} / ${metrics.ram.totalGB} GB` : "Loading…",
+                  pct: metrics?.ram.usagePercent ?? 0,
+                  color: "#7b5cff",
+                },
+                {
+                  icon: HardDrive,
+                  title: "Storage",
+                  sub: metrics?.storage[0]
+                    ? `${metrics.storage[0].usedGB} / ${metrics.storage[0].totalGB} GB`
+                    : "Loading…",
+                  pct: metrics?.storage[0]?.usagePercent ?? 0,
+                  color: "#4ade80",
+                },
+              ].map((a) => (
                 <div key={a.title} className="flex items-center gap-3">
                   <div className="relative size-8 shrink-0">
                     <svg className="size-8 -rotate-90" viewBox="0 0 32 32">
@@ -351,12 +385,15 @@ function Home() {
                       />
                     </svg>
                     <span className="absolute inset-0 grid place-items-center text-[8px] font-mono">
-                      {a.pct}
+                      {Math.round(a.pct)}%
                     </span>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-xs font-medium">{a.title}</div>
-                    <div className="text-[10px] text-muted-foreground">{a.sub}</div>
+                    <div className="flex items-center gap-1.5">
+                      <a.icon className="size-3 shrink-0" style={{ color: a.color }} />
+                      <span className="text-xs font-medium">{a.title}</span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground truncate">{a.sub}</div>
                   </div>
                 </div>
               ))}
@@ -441,10 +478,4 @@ const projects = [
     dotColor: "#7e8794",
     gradient: "radial-gradient(ellipse at 50% 0%, rgba(79,125,255,0.35), transparent 60%)",
   },
-];
-
-const activities = [
-  { title: "Indexing local memory", sub: "4,120 assets", pct: 62, color: "#61c7ff" },
-  { title: "Optimizing storage", sub: "recovered 2.4 GB", pct: 88, color: "#4ade80" },
-  { title: "Backing up Aether", sub: "iCloud · encrypted", pct: 34, color: "#7b5cff" },
 ];
