@@ -13,6 +13,7 @@ import * as path from "path";
 import windowStateKeeper from "electron-window-state";
 import log from "electron-log";
 import * as fs from "fs";
+import * as net from "net";
 import { registerCriticalHandlers, registerDeferredHandlers } from "./ipc/index";
 import { IpcChannels } from "./ipc/channels";
 import { registerUpdaterHandlers, scheduleUpdateChecks } from "./ipc/updater.ipc";
@@ -56,9 +57,21 @@ function cleanOldLogs() {
   }
 }
 
+// ─── Find Free Port ────────────────────────────────────────────────────────
+function getFreePort(): Promise<number> {
+  return new Promise((resolve) => {
+    const srv = net.createServer();
+    srv.listen(0, () => {
+      const port = (srv.address() as net.AddressInfo).port;
+      srv.close(() => resolve(port));
+    });
+  });
+}
+
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isAppQuitting = false;
+let prodServerPort: number | null = null;
 
 // ─── Window Creation ───────────────────────────────────────────────────────
 function createWindow(): void {
@@ -103,9 +116,9 @@ function createWindow(): void {
     mainWindow.loadURL(DEV_SERVER_URL);
     mainWindow.webContents.openDevTools({ mode: "detach" });
   } else {
-    const indexPath = path.join(__dirname, "../../dist/index.html");
-    log.info(`[main] Production mode: loading ${indexPath}`);
-    mainWindow.loadFile(indexPath);
+    const url = `http://127.0.0.1:${prodServerPort}`;
+    log.info(`[main] Production mode: loading Nitro server at ${url}`);
+    mainWindow.loadURL(url);
   }
 
   // ─── Window Events ────────────────────────────────────────────────────
@@ -289,13 +302,33 @@ app.whenReady().then(() => {
   registerAppControls();
   applyContentSecurityPolicy();
 
-  createWindow();
-  createTray();
-  registerGlobalShortcut();
+  // M12: Start production server if not in dev mode
+  const startApp = async () => {
+    if (!isDev) {
+      try {
+        prodServerPort = await getFreePort();
+        process.env.NITRO_PORT = prodServerPort.toString();
+        process.env.NITRO_HOST = "127.0.0.1";
+        
+        // Dynamically import the Nitro server ES module
+        const serverPath = path.join(__dirname, "../../.output/server/index.mjs");
+        // Windows requires file:// URL for dynamic import of absolute paths
+        await import(`file://${serverPath}`);
+        log.info(`[main] Production Nitro server started on port ${prodServerPort}`);
+      } catch (err) {
+        log.error("[main] Failed to start production server:", err);
+      }
+    }
+    createWindow();
+    createTray();
+    registerGlobalShortcut();
 
-  // M12: Register auto-updater after window is created
-  registerUpdaterHandlers(mainWindow);
-  scheduleUpdateChecks(mainWindow);
+    // M12: Register auto-updater after window is created
+    registerUpdaterHandlers(mainWindow!);
+    scheduleUpdateChecks(mainWindow!);
+  };
+  
+  startApp();
 });
 
 app.on("window-all-closed", () => {

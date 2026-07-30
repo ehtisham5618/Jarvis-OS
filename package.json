@@ -1,7 +1,7 @@
 {
   "name": "jarvis-os",
   "productName": "Jarvis",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "The Intelligence of Your Computer",
   "author": {
     "name": "Jarvis OS",
@@ -21,8 +21,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
-    "build:electron": "npm run build && npm run electron:build-main && electron-builder",
-    "build:electron:dir": "npm run build && npm run electron:build-main && electron-builder --dir",
+    "build:electron": "cross-env NITRO_PRESET=node-server npm run build && npm run electron:build-main && electron-builder",
+    "build:electron:dir": "cross-env NITRO_PRESET=node-server npm run build && npm run electron:build-main && electron-builder --dir",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
@@ -142,7 +142,7 @@
       "output": "release/"
     },
     "files": [
-      "dist/**/*",
+      ".output/**/*",
       "electron/dist/**/*"
     ],
     "asarUnpack": [
