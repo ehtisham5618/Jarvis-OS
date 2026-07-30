@@ -14,6 +14,7 @@ import windowStateKeeper from "electron-window-state";
 import log from "electron-log";
 import * as fs from "fs";
 import * as net from "net";
+import { ChildProcess } from "child_process";
 import { registerCriticalHandlers, registerDeferredHandlers } from "./ipc/index";
 import { IpcChannels } from "./ipc/channels";
 import { registerUpdaterHandlers, scheduleUpdateChecks } from "./ipc/updater.ipc";
@@ -72,6 +73,7 @@ let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isAppQuitting = false;
 let prodServerPort: number | null = null;
+let nitroServer: ChildProcess | null = null;
 
 // ─── Window Creation ───────────────────────────────────────────────────────
 function createWindow(): void {
@@ -272,12 +274,12 @@ function applyContentSecurityPolicy(): void {
         ...details.responseHeaders,
         "Content-Security-Policy": [
           [
-            "default-src 'self'",
-            "script-src 'self' 'unsafe-inline'", // unsafe-inline needed for Vite HMR in dev
+            "default-src 'self' http://127.0.0.1:*",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval needed for SSR hydration
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-            "font-src 'self' https://fonts.gstatic.com",
-            "connect-src 'self' http://localhost:11434 ws://localhost:*", // Ollama + Vite HMR
-            "img-src 'self' data:",
+            "font-src 'self' https://fonts.gstatic.com data:",
+            "connect-src 'self' http://127.0.0.1:* http://localhost:11434 ws://localhost:* ws://127.0.0.1:*", // Nitro + Ollama + Vite HMR
+            "img-src 'self' data: blob:",
           ].join("; "),
         ],
       },
@@ -307,14 +309,47 @@ app.whenReady().then(() => {
     if (!isDev) {
       try {
         prodServerPort = await getFreePort();
-        process.env.NITRO_PORT = prodServerPort.toString();
-        process.env.NITRO_HOST = "127.0.0.1";
 
-        // Dynamically import the Nitro server ES module
-        const serverPath = path.join(__dirname, "../../.output/server/index.mjs");
-        // Windows requires file:// URL for dynamic import of absolute paths
-        await import(`file://${serverPath}`);
-        log.info(`[main] Production Nitro server started on port ${prodServerPort}`);
+        // Build the path to the unpacked Nitro server
+        // __dirname is inside app.asar, Nitro must be in app.asar.unpacked
+        let serverPath = path.join(__dirname, "../../.output/server/index.mjs");
+        serverPath = serverPath.replace(/app\.asar[/\\]/g, "app.asar.unpacked/");
+        // Normalise to OS path separators for spawn
+        const serverNativePath = path.normalize(serverPath);
+        log.info(`[main] Spawning Nitro server: ${serverNativePath}`);
+
+        // Use spawn with node (process.execPath is the node bundled in Electron)
+        // This correctly handles ESM .mjs files outside of the ASAR archive
+        await new Promise<void>((resolve, reject) => {
+          const { spawn } = require("child_process");
+          nitroServer = spawn(process.execPath, [serverNativePath], {
+            env: {
+              ...process.env,
+              NITRO_PORT: prodServerPort!.toString(),
+              NITRO_HOST: "127.0.0.1",
+            },
+            stdio: "pipe",
+            detached: false,
+          });
+
+          const proc = nitroServer;
+          proc!.stdout?.on("data", (d: Buffer) => {
+            log.info(`[nitro] ${d.toString().trim()}`);
+          });
+          proc!.stderr?.on("data", (d: Buffer) => {
+            const msg = d.toString().trim();
+            log.info(`[nitro] ${msg}`);
+            if (msg.includes("Listening") || msg.includes("listening")) resolve();
+          });
+          proc!.on("error", (err: Error) => {
+            log.error("[main] Nitro spawn error:", err);
+            reject(err);
+          });
+          // Give up to 5 seconds to start
+          setTimeout(resolve, 5000);
+        });
+
+        log.info(`[main] Nitro server ready on port ${prodServerPort}`);
       } catch (err) {
         log.error("[main] Failed to start production server:", err);
       }
@@ -348,5 +383,9 @@ app.on("activate", () => {
 
 app.on("will-quit", () => {
   globalShortcut.unregisterAll();
+  if (nitroServer) {
+    nitroServer.kill();
+    log.info("[main] Nitro server killed");
+  }
   log.info("[main] App quitting — all shortcuts unregistered");
 });

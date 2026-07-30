@@ -1,7 +1,7 @@
 {
   "name": "jarvis-os",
   "productName": "Jarvis",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "The Intelligence of Your Computer",
   "author": {
     "name": "Jarvis OS",
@@ -146,6 +146,7 @@
       "electron/dist/**/*"
     ],
     "asarUnpack": [
+      ".output/**/*",
       "**/*.{node,dll}",
       "**/node_modules/sharp/**/*",
       "**/node_modules/@img/**/*",
