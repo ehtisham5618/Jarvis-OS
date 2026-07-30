@@ -8,19 +8,19 @@
 
 ## ✨ Features
 
-| Feature | Description |
-|---|---|
-| 🧠 **AI Chat** | Streaming conversations with local LLMs via Ollama (Llama 3, Mistral, etc.) |
-| 🔍 **Semantic Memory** | Persistent, searchable memory powered by LanceDB vector storage |
-| 🎙️ **Voice Intelligence** | Speak to Jarvis — STT via Whisper, TTS via Windows SAPI |
-| 👁️ **Vision** | Screenshot, OCR, and AI image analysis |
-| ⚡ **Automations** | Trigger/action automation engine with cron scheduling |
-| 🧩 **Plugin System** | Install community plugins with a typed SDK and sandboxed runtime |
-| 🔒 **Security** | Windows Hello biometric auth, PIN lock, runtime permission prompts, audit log |
-| 📊 **System Monitor** | Real-time CPU, RAM, and process monitoring |
-| 📁 **File Browser** | Integrated file navigator with OS integration |
-| 💻 **Terminal** | Sandboxed terminal with command allowlists |
-| 🎨 **Customizable** | Themes, wallpapers, privacy mode, model selection |
+| Feature                   | Description                                                                   |
+| ------------------------- | ----------------------------------------------------------------------------- |
+| 🧠 **AI Chat**            | Streaming conversations with local LLMs via Ollama (Llama 3, Mistral, etc.)   |
+| 🔍 **Semantic Memory**    | Persistent, searchable memory powered by LanceDB vector storage               |
+| 🎙️ **Voice Intelligence** | Speak to Jarvis — STT via Whisper, TTS via Windows SAPI                       |
+| 👁️ **Vision**             | Screenshot, OCR, and AI image analysis                                        |
+| ⚡ **Automations**        | Trigger/action automation engine with cron scheduling                         |
+| 🧩 **Plugin System**      | Install community plugins with a typed SDK and sandboxed runtime              |
+| 🔒 **Security**           | Windows Hello biometric auth, PIN lock, runtime permission prompts, audit log |
+| 📊 **System Monitor**     | Real-time CPU, RAM, and process monitoring                                    |
+| 📁 **File Browser**       | Integrated file navigator with OS integration                                 |
+| 💻 **Terminal**           | Sandboxed terminal with command allowlists                                    |
+| 🎨 **Customizable**       | Themes, wallpapers, privacy mode, model selection                             |
 
 ---
 
@@ -72,14 +72,14 @@ This will start both the Vite dev server and Electron simultaneously.
 
 ### Scripts
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start Vite dev server only |
-| `npm run dev:electron` | Start full Electron + Vite dev environment |
-| `npm run build` | Build Vite renderer for production |
-| `npm run electron:build-main` | Compile Electron TypeScript |
-| `npm run build:electron` | Full production build + installer |
-| `npx tsc --noEmit` | Type-check without emitting files |
+| Command                       | Description                                |
+| ----------------------------- | ------------------------------------------ |
+| `npm run dev`                 | Start Vite dev server only                 |
+| `npm run dev:electron`        | Start full Electron + Vite dev environment |
+| `npm run build`               | Build Vite renderer for production         |
+| `npm run electron:build-main` | Compile Electron TypeScript                |
+| `npm run build:electron`      | Full production build + installer          |
+| `npx tsc --noEmit`            | Type-check without emitting files          |
 
 ### Project Structure
 

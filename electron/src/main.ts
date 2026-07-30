@@ -309,7 +309,7 @@ app.whenReady().then(() => {
         prodServerPort = await getFreePort();
         process.env.NITRO_PORT = prodServerPort.toString();
         process.env.NITRO_HOST = "127.0.0.1";
-        
+
         // Dynamically import the Nitro server ES module
         const serverPath = path.join(__dirname, "../../.output/server/index.mjs");
         // Windows requires file:// URL for dynamic import of absolute paths
@@ -327,7 +327,7 @@ app.whenReady().then(() => {
     registerUpdaterHandlers(mainWindow!);
     scheduleUpdateChecks(mainWindow!);
   };
-  
+
   startApp();
 });
 

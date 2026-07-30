@@ -131,7 +131,9 @@ export function FileBrowser({ startPath }: { startPath?: string }) {
     }
   }, []);
 
-  useEffect(() => { loadDir(currentPath); }, []);  // eslint-disable-line
+  useEffect(() => {
+    loadDir(currentPath);
+  }, []); // eslint-disable-line
 
   // Breadcrumb segments
   const pathSegments = currentPath.replace(/\\/g, "/").split("/").filter(Boolean);
