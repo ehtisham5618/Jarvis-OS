@@ -1,152 +1,71 @@
 # Jarvis OS
 
-> **The Intelligence of Your Computer**
->
-> Jarvis is not an app. Jarvis is not a chatbot. Jarvis is an **AI-Native Desktop Environment** — the first OS designed to understand your intent instead of waiting for your commands.
+Jarvis OS is a Windows desktop assistant built with Electron, React, and TanStack Start. It connects to local Ollama models for streaming chat and exposes native file, memory, and system services through an isolated preload bridge. It is an application, not a replacement operating system.
 
----
+## Install
 
-## ✨ Features
+Download **Jarvis-Setup-0.1.22.exe** from [the latest release](https://github.com/ehtisham5618/Jarvis-OS/releases/latest). Run the installer and launch Jarvis from the Start menu. Windows 10/11 x64 is the supported release target. Builds without a configured signing certificate are unsigned.
 
-| Feature                   | Description                                                                   |
-| ------------------------- | ----------------------------------------------------------------------------- |
-| 🧠 **AI Chat**            | Streaming conversations with local LLMs via Ollama (Llama 3, Mistral, etc.)   |
-| 🔍 **Semantic Memory**    | Persistent, searchable memory powered by LanceDB vector storage               |
-| 🎙️ **Voice Intelligence** | Speak to Jarvis — STT via Whisper, TTS via Windows SAPI                       |
-| 👁️ **Vision**             | Screenshot, OCR, and AI image analysis                                        |
-| ⚡ **Automations**        | Trigger/action automation engine with cron scheduling                         |
-| 🧩 **Plugin System**      | Install community plugins with a typed SDK and sandboxed runtime              |
-| 🔒 **Security**           | Windows Hello biometric auth, PIN lock, runtime permission prompts, audit log |
-| 📊 **System Monitor**     | Real-time CPU, RAM, and process monitoring                                    |
-| 📁 **File Browser**       | Integrated file navigator with OS integration                                 |
-| 💻 **Terminal**           | Sandboxed terminal with command allowlists                                    |
-| 🎨 **Customizable**       | Themes, wallpapers, privacy mode, model selection                             |
+For local chat, install and start [Ollama](https://ollama.com), then install a model appropriate for your machine. Jarvis discovers installed model tags, including custom models. It does not download models at startup. The desktop remains usable when Ollama is offline and shows an offline state instead of simulated AI responses.
 
----
+## What is verified
 
-## 🚀 Quick Start
+| Area              | Release verification                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| Desktop           | Development and production startup, 21 routes, repeated launches, minimize/restore, close to tray |
+| Local chat        | Actual Ollama streaming, exact model discovery, offline handling, cancellation regression tests   |
+| Native services   | File read/write/list, memory store/search/delete, CPU/RAM/disks/process telemetry                 |
+| Recovery          | Loading/error screens and retry after an intentional renderer crash                               |
+| Optional features | Voice, OCR, Windows Hello, plugins, and automation exist but are not exhaustively validated       |
 
-### Prerequisites
+Semantic memory retrieval requires an installed embedding model. Missing sensors depend on hardware and drivers; some GPU fields retain zero when the driver cannot report them. Some dashboard and roadmap screens still contain demonstration content. See [the verification report](STABILIZATION.md) for the exact evidence and limits.
 
-- Windows 10/11 (64-bit)
-- [Ollama](https://ollama.ai) installed and running locally
-- At least one model pulled: `ollama pull llama3`
+## Develop
 
-### Installation
+Use **Node.js 24** and npm, matching CI. `package-lock.json` is the supported dependency lockfile.
 
-1. Download the latest `Jarvis-Setup-x.x.x.exe` from [Releases](https://github.com/ehtisham5618/Jarvis-OS/releases)
-2. Run the installer (you may get a SmartScreen warning — click "More info" → "Run anyway")
-3. Launch Jarvis from your desktop or Start menu
-
-### First Run
-
-1. Jarvis will detect your Ollama installation automatically
-2. Complete the setup wizard to choose your default model and preferences
-3. Press `Ctrl+Space` to summon Jarvis from anywhere
-
----
-
-## 🛠️ Development Setup
-
-### Requirements
-
-- Node.js 20+
-- npm 10+
-- Git
-
-### Getting Started
-
-```bash
-# Clone the repository
+```powershell
 git clone https://github.com/ehtisham5618/Jarvis-OS.git
 cd Jarvis-OS
-
-# Install dependencies
-npm install
-
-# Start the development server
+npm ci
 npm run dev:electron
 ```
 
-This will start both the Vite dev server and Electron simultaneously.
+The desktop command compiles Electron, starts Vite on `127.0.0.1:8080`, and waits before opening Electron. Unset `ELECTRON_RUN_AS_NODE` if your shell sets it. `npm run dev` alone uses browser simulation for native services and is not a substitute for desktop integration testing.
 
-### Scripts
+| Command                       | Purpose                                                  |
+| ----------------------------- | -------------------------------------------------------- |
+| `npm test`                    | Targeted regression tests                                |
+| `npm run lint`                | ESLint                                                   |
+| `npx tsc --noEmit`            | Renderer type checking                                   |
+| `npm run electron:build-main` | Electron type checking and compilation                   |
+| `npm run build`               | Production renderer/server in `.output/`                 |
+| `npm run build:electron:dir`  | Windows application directory in `release/win-unpacked/` |
+| `npm run build:electron`      | Windows NSIS installer in `release/`                     |
+| `npm run test:electron`       | Native smoke harness; see testing guide                  |
 
-| Command                       | Description                                |
-| ----------------------------- | ------------------------------------------ |
-| `npm run dev`                 | Start Vite dev server only                 |
-| `npm run dev:electron`        | Start full Electron + Vite dev environment |
-| `npm run build`               | Build Vite renderer for production         |
-| `npm run electron:build-main` | Compile Electron TypeScript                |
-| `npm run build:electron`      | Full production build + installer          |
-| `npx tsc --noEmit`            | Type-check without emitting files          |
+## Architecture and behavior
 
-### Project Structure
+- `electron/src/main.ts` manages the window, tray, lifecycle, and recovery. `startup.ts` starts the production HTTP server on loopback port 43123 and verifies readiness before navigation.
+- `electron/src/preload.ts` exposes bounded IPC calls with context isolation enabled and Node integration disabled.
+- `src/core/` registers service implementations. `src/services/` separates native and Ollama adapters from their interfaces; `src/stores/` manages renderer state.
+- `src/routes/` contains file-based routes. Do not edit `src/routeTree.gen.ts` manually.
+- Expensive native modules load on demand. Telemetry caches slow queries and shares pending work rather than overlapping polls.
+- Closing the window hides Jarvis to the tray. Use the tray Quit command to exit. `Ctrl+Space` toggles the desktop. `--safe-mode` disables hardware acceleration and automation triggers.
 
-```
-jarvis-os/
-├── electron/          # Electron main process
-│   └── src/
-│       ├── main.ts        # Entry point, window management
-│       ├── preload.ts     # IPC bridge (contextBridge)
-│       ├── ipc/           # IPC handler modules
-│       ├── auth/          # Authentication & audit
-│       ├── automation/    # Automation engine
-│       ├── plugins/       # Plugin loader & sandbox
-│       └── telemetry/     # Crash reporting & telemetry
-├── src/               # Renderer (React + TanStack Router)
-│   ├── routes/        # Page routes
-│   ├── components/    # UI components
-│   ├── stores/        # Zustand state stores
-│   ├── services/      # Service interfaces & implementations
-│   ├── workers/       # Web Workers
-│   └── core/          # DI registry, logger, init
-├── public/            # Static assets
-├── sample-plugin/     # Example plugin
-└── .github/workflows/ # CI/CD pipelines
-```
+## Data and network access
 
----
+Chat is sent to the configured Ollama endpoint, which defaults to localhost. A remote endpoint changes where that data is processed. Model downloads, update checks, and some external resources need network access. Crash upload is disabled by default. Native actions are mediated through IPC; this is not a claim that every handler or plugin has undergone a security audit.
 
-## 🏗️ Architecture
+## Documentation
 
-Jarvis is built on a strict **interface-first** architecture:
+- [Development, testing, and troubleshooting](docs/DEVELOPMENT.md)
+- [Release procedure](docs/RELEASING.md)
+- [Changelog](CHANGELOG.md)
+- [Stabilization findings and verification](STABILIZATION.md)
+- [Contribution guide](CONTRIBUTING.md)
+- [Route conventions](src/routes/README.md)
 
-- **Never coupled to Windows** — all OS operations go through `IService` interfaces
-- **Dependency injection** — `ServiceRegistry` resolves implementations at runtime
-- **Electron as a platform** — never a dependency, always an implementation detail
-- **Security by default** — `contextIsolation: true`, `nodeIntegration: false`, Zod-validated IPC
+## License
 
----
-
-## 🔒 Privacy
-
-Jarvis is **privacy-first**:
-
-- All AI processing runs locally via Ollama — your conversations never leave your machine
-- Privacy Mode (`Ctrl+Shift+P`) enforces local-only operation
-- Telemetry is anonymous, opt-out, and never includes content or file paths
-- Audit log gives you full visibility into every system action
-
----
-
-## 📄 License
-
-MIT © 2026 Jarvis OS — See [LICENSE](LICENSE) for details.
-
----
-
-## 🤝 Contributing
-
-We welcome contributions! Please read our contributing guidelines and follow [Conventional Commits](https://www.conventionalcommits.org/).
-
-```bash
-# Feature
-git commit -m "feat(voice): add wake-word detection"
-
-# Bug fix
-git commit -m "fix(memory): resolve embedding timeout on slow hardware"
-
-# Performance
-git commit -m "perf(chat): reduce re-renders with useMemo"
-```
+[MIT](LICENSE).

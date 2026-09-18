@@ -1,6 +1,7 @@
 import { serviceRegistry, ServiceToken } from "./service-registry";
 import { MockSystemService } from "@/services/mock/MockSystemService";
-import { MockAIService } from "@/services/mock/MockAIService";
+import { ElectronVoiceService } from "@/services/electron/ElectronVoiceService";
+import { MockVoiceService } from "@/services/mock/MockVoiceService";
 import { MockModelService } from "@/services/mock/MockModelService";
 import { MockWindowsService } from "@/services/mock/MockWindowsService";
 import { MockMemoryService } from "@/services/mock/MockMemoryService";
@@ -36,35 +37,21 @@ export async function initializeJarvis(): Promise<void> {
     serviceRegistry.register(ServiceToken.System, new ElectronSystemService());
     serviceRegistry.register(ServiceToken.Windows, new ElectronWindowsService());
     serviceRegistry.register(ServiceToken.Memory, new ElectronMemoryService());
-    import("@/services/electron/ElectronVoiceService").then((m) =>
-      serviceRegistry.register(ServiceToken.Voice, new m.ElectronVoiceService()),
-    );
+    serviceRegistry.register(ServiceToken.Voice, new ElectronVoiceService());
   } else {
     // Browser dev mode — realistic simulation
     log.warn("Browser context — wiring mock system service.");
     serviceRegistry.register(ServiceToken.System, new MockSystemService());
     serviceRegistry.register(ServiceToken.Windows, new MockWindowsService());
     serviceRegistry.register(ServiceToken.Memory, new MockMemoryService());
-    import("@/services/mock/MockVoiceService").then((m) =>
-      serviceRegistry.register(ServiceToken.Voice, new m.MockVoiceService()),
-    );
+    serviceRegistry.register(ServiceToken.Voice, new MockVoiceService());
   }
 
   // ─── 2. Model Service ───────────────────────────────────────────────────
   serviceRegistry.register(ServiceToken.Model, new MockModelService());
 
   // ─── 3. AI Service: Ollama → Mock fallback ──────────────────────────────
-  const ollama = new OllamaService();
-  const isOllamaUp = await ollama.isAvailable();
-
-  if (isOllamaUp) {
-    log.info("Ollama online — wiring real AI engine.");
-    serviceRegistry.register(ServiceToken.AI, ollama);
-  } else {
-    log.warn("Ollama unreachable — wiring mock AI engine.");
-    serviceRegistry.register(ServiceToken.AI, new MockAIService());
-  }
-
+  serviceRegistry.register(ServiceToken.AI, new OllamaService());
   isInitialized = true;
-  log.info("Boot complete. Executive intelligence online.");
+  log.info("Core services registered. AI discovery runs in the background.");
 }

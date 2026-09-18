@@ -76,7 +76,7 @@ export function TitleBar() {
 
         {/* Close (hides to tray) */}
         <button
-          onClick={() => window.jarvisOS.app.quit()}
+          onClick={() => window.jarvisOS.app.toggle()}
           className="flex h-10 w-12 items-center justify-center text-white/40
                      transition-colors hover:bg-[#f87171]/20 hover:text-[#f87171]"
           title="Close to tray"

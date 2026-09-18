@@ -31,6 +31,7 @@ export const useModelsStore = create<ModelsState>()((set, get) => ({
 
   // ─── Fetch & enrich with suitability ────────────────────────────────────────
   fetchModels: async () => {
+    if (get().isLoading) return;
     set({ isLoading: true });
     try {
       const modelService = serviceRegistry.resolve<
@@ -42,11 +43,12 @@ export const useModelsStore = create<ModelsState>()((set, get) => ({
 
       const [rawModels, metrics] = await Promise.all([
         modelService.getModels(),
-        systemService.getMetrics(),
+        systemService.getMetrics().catch(() => null),
       ]);
 
       // Compute suitability for each model
       const models = rawModels.map((m) => {
+        if (!metrics) return m;
         const result = computeSuitability(m, metrics);
         return {
           ...m,
@@ -56,6 +58,12 @@ export const useModelsStore = create<ModelsState>()((set, get) => ({
       });
 
       set({ models, isLoading: false });
+      const { useAIStore } = await import("./ai.store");
+      const active = useAIStore.getState().activeModel;
+      const installed = models.filter((model) => model.installed && !model.embeddings);
+      if (!installed.some((model) => model.id === active) && installed[0]) {
+        useAIStore.getState().setActiveModel(installed[0].id);
+      }
     } catch (err) {
       log.error("Failed to fetch models", { error: err });
       set({ isLoading: false });

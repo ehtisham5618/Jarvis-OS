@@ -43,15 +43,20 @@ class JarvisConfigManager {
     const isElectron =
       typeof window !== "undefined" && window.navigator.userAgent.includes("Electron");
 
+    let savedHost = "http://localhost:11434";
+    try {
+      const stored =
+        typeof localStorage !== "undefined" ? localStorage.getItem("jarvis:ollama:host") : null;
+      if (stored && ["http:", "https:"].includes(new URL(stored).protocol)) savedHost = stored;
+    } catch {
+      log.warn("Invalid or inaccessible saved Ollama host; using localhost.");
+    }
     const rawConfig = {
       env: import.meta.env?.MODE ?? "development",
       isElectron,
       // Attempt to load saved Ollama host from storage, otherwise use default
       ollama: {
-        host:
-          typeof localStorage !== "undefined"
-            ? (localStorage.getItem("jarvis:ollama:host") ?? "http://localhost:11434")
-            : "http://localhost:11434",
+        host: savedHost,
         timeoutMs: 5000,
       },
     };

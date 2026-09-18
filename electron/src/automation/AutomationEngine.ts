@@ -35,7 +35,9 @@ function ensureDir(): void {
 let automations: Automation[] = [];
 const watchers = new Map<string, ReturnType<typeof chokidar.watch>>();
 const cronJobs = new Map<string, ReturnType<typeof cron.schedule>>();
-const hotkeyIds = new Set<string>();
+const hotkeyIds = new Map<string, string>();
+const clipboardTimers = new Map<string, ReturnType<typeof setInterval>>();
+const running = new Set<string>();
 
 // ─── Persistence ────────────────────────────────────────────────────────────
 
@@ -92,7 +94,12 @@ async function executeAction(action: Action, _ctx: Record<string, unknown>): Pro
     case "shell_exec": {
       const { spawn } = await import("child_process");
       await new Promise<void>((res, rej) => {
-        const proc = spawn(action.command, action.args, { shell: true });
+        const proc = spawn(action.command, action.args, {
+          shell: false,
+          windowsHide: true,
+          timeout: 30000,
+          stdio: "ignore",
+        });
         proc.on("close", (code) => (code === 0 ? res() : rej(new Error(`Exit code ${code}`))));
         proc.on("error", rej);
       });
@@ -103,7 +110,7 @@ async function executeAction(action: Action, _ctx: Record<string, unknown>): Pro
       break;
     }
     case "write_file": {
-      fs.writeFileSync(action.path, action.content, "utf-8");
+      await fs.promises.writeFile(action.path, action.content, "utf-8");
       break;
     }
     case "clipboard_write": {
@@ -127,6 +134,14 @@ async function executeAction(action: Action, _ctx: Record<string, unknown>): Pro
 // ─── Runner ──────────────────────────────────────────────────────────────────
 
 async function runAutomation(id: string): Promise<AutomationRunResult> {
+  if (running.has(id))
+    return {
+      success: false,
+      executedAt: new Date().toISOString(),
+      durationMs: 0,
+      actionsRun: 0,
+      error: "Already running",
+    };
   const automation = automations.find((a) => a.id === id);
   if (!automation)
     return {
@@ -137,6 +152,7 @@ async function runAutomation(id: string): Promise<AutomationRunResult> {
       error: "Not found",
     };
 
+  running.add(id);
   const start = Date.now();
   let actionsRun = 0;
   let error: string | undefined;
@@ -146,6 +162,7 @@ async function runAutomation(id: string): Promise<AutomationRunResult> {
     const ctx: Record<string, unknown> = {};
     const pass = automation.conditions.every((c) => evaluateCondition(c, ctx));
     if (!pass) {
+      running.delete(id);
       log.info(`[automation] ${automation.name} — conditions not met, skipped.`);
       return { success: true, executedAt: new Date().toISOString(), durationMs: 0, actionsRun: 0 };
     }
@@ -160,6 +177,7 @@ async function runAutomation(id: string): Promise<AutomationRunResult> {
     log.error(`[automation] ${automation.name} failed:`, err);
   }
 
+  running.delete(id);
   // Persist run count + timestamp + status
   automation.runCount++;
   automation.lastRanAt = new Date().toISOString();
@@ -178,7 +196,7 @@ async function runAutomation(id: string): Promise<AutomationRunResult> {
 // ─── Trigger Registration ─────────────────────────────────────────────────────
 
 function registerTriggers(automation: Automation): void {
-  if (!automation.enabled) return;
+  if (!automation.enabled || process.argv.includes("--safe-mode")) return;
   const { trigger } = automation;
 
   switch (trigger.type) {
@@ -202,7 +220,7 @@ function registerTriggers(automation: Automation): void {
         runAutomation(automation.id);
       });
       if (!ok) log.warn(`[automation] Failed to register hotkey: ${accelerator}`);
-      else hotkeyIds.add(accelerator);
+      else hotkeyIds.set(automation.id, accelerator);
       break;
     }
 
@@ -231,7 +249,7 @@ function registerTriggers(automation: Automation): void {
         }
       }, 2000);
       // Store as a dummy watcher-like object for cleanup
-      (automation as any).__clipboardInterval = interval;
+      clipboardTimers.set(automation.id, interval);
       break;
     }
 
@@ -244,6 +262,16 @@ function registerTriggers(automation: Automation): void {
 }
 
 function unregisterTriggers(automationId: string): void {
+  const timer = clipboardTimers.get(automationId);
+  if (timer) {
+    clearInterval(timer);
+    clipboardTimers.delete(automationId);
+  }
+  const accelerator = hotkeyIds.get(automationId);
+  if (accelerator) {
+    globalShortcut.unregister(accelerator);
+    hotkeyIds.delete(automationId);
+  }
   // Cron
   const job = cronJobs.get(automationId);
   if (job) {
@@ -264,6 +292,9 @@ function unregisterTriggers(automationId: string): void {
 // ─── IPC Handlers ────────────────────────────────────────────────────────────
 
 export function registerAutomationHandlers(): void {
+  app.once("before-quit", () => {
+    for (const automation of automations) unregisterTriggers(automation.id);
+  });
   loadFromDisk();
 
   // Register triggers for all enabled automations

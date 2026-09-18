@@ -33,6 +33,7 @@ export interface ChatThread {
 }
 
 export interface ChatOptions {
+  signal?: AbortSignal;
   model: string;
   temperature?: number; // 0.0 – 2.0
   maxTokens?: number;

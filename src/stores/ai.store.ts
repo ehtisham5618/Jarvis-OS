@@ -139,7 +139,6 @@ export const useAIStore = create<AIState>()(
       stopStreaming: () => {
         if (currentAbortController) {
           currentAbortController.abort();
-          currentAbortController = null;
         }
         set({ isStreaming: false });
       },
@@ -159,6 +158,7 @@ export const useAIStore = create<AIState>()(
       setActiveModel: (model) => set({ activeModel: model }),
 
       sendMessage: async (content: string) => {
+        if (currentAbortController) return;
         let { activeThreadId, threads, activeModel } = get();
 
         if (!activeThreadId) {
@@ -168,6 +168,8 @@ export const useAIStore = create<AIState>()(
 
         const thread = threads[activeThreadId];
         if (!thread) return;
+        const controller = new AbortController();
+        currentAbortController = controller;
 
         // Auto-title thread from first message
         const isFirstMessage = thread.messages.length === 0;
@@ -226,8 +228,6 @@ export const useAIStore = create<AIState>()(
         }));
 
         // Create abort controller for this request
-        currentAbortController = new AbortController();
-
         try {
           const aiService = serviceRegistry.resolve<
             import("@/services/interfaces/IAIService").IAIService
@@ -268,12 +268,12 @@ export const useAIStore = create<AIState>()(
 
           const stream = aiService.chat(
             { ...thread, messages: messagesForContext },
-            { model: activeModel },
+            { model: activeModel, signal: controller.signal },
           );
 
           for await (const chunk of stream) {
             // Check if aborted
-            if (currentAbortController?.signal.aborted) break;
+            if (controller.signal.aborted) break;
 
             set((state) => {
               const currentThread = state.threads[activeThreadId!];
@@ -309,7 +309,7 @@ export const useAIStore = create<AIState>()(
           // Trigger Auto-speak if enabled
           const { useSettingsStore } = await import("@/stores/settings.store");
           const { voice } = useSettingsStore.getState();
-          if (voice.autoSpeak && !currentAbortController?.signal.aborted) {
+          if (voice.autoSpeak && !controller.signal.aborted) {
             const finalThread = get().threads[activeThreadId!];
             if (finalThread) {
               const lastMsg = finalThread.messages[finalThread.messages.length - 1];
@@ -324,13 +324,37 @@ export const useAIStore = create<AIState>()(
             }
           }
         } catch (err) {
-          log.error("Failed to stream response", { error: err });
+          if (!controller.signal.aborted) {
+            log.error("Failed to stream response", { error: err });
+            set((state) => {
+              const current = state.threads[activeThreadId!];
+              if (!current) return state;
+              return {
+                threads: {
+                  ...state.threads,
+                  [activeThreadId!]: {
+                    ...current,
+                    messages: current.messages.map((message) =>
+                      message.id === assistantMessageId
+                        ? {
+                            ...message,
+                            content:
+                              message.content ||
+                              "Local AI could not respond. Check that Ollama is running and the selected model is installed, then retry.",
+                          }
+                        : message,
+                    ),
+                  },
+                },
+              };
+            });
+          }
           set({ isStreaming: false });
         } finally {
           currentAbortController = null;
           set({ isStreaming: false });
           // Trigger summarization safely in background
-          if (activeThreadId) {
+          if (activeThreadId && !controller.signal.aborted) {
             triggerBackgroundSummarization(activeThreadId).catch(console.error);
           }
         }

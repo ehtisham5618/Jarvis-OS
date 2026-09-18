@@ -132,7 +132,17 @@ export function FileBrowser({ startPath }: { startPath?: string }) {
   }, []);
 
   useEffect(() => {
-    loadDir(currentPath);
+    if (startPath || !window.jarvisOS) {
+      void loadDir(currentPath);
+      return;
+    }
+    void windowsService
+      .getEnv("USERPROFILE")
+      .then((home) => {
+        if (home) return loadDir(home);
+        setError("Home directory unavailable");
+      })
+      .catch((error: unknown) => setError(String(error)));
   }, []); // eslint-disable-line
 
   // Breadcrumb segments

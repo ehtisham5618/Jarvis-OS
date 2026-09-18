@@ -14,7 +14,8 @@ const ALLOWED_ROOT = app.getPath("home");
 
 function assertSafePath(filePath: string): string {
   const resolved = path.resolve(filePath);
-  if (!resolved.startsWith(ALLOWED_ROOT)) {
+  const relative = path.relative(ALLOWED_ROOT, resolved);
+  if (relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
     throw new Error(
       `[fs.ipc] Path traversal blocked: "${resolved}" is outside allowed root "${ALLOWED_ROOT}"`,
     );
@@ -41,6 +42,7 @@ export function registerFsHandlers(): void {
     return entries.map((e) => ({
       name: e.name,
       isDirectory: e.isDirectory(),
+      isDir: e.isDirectory(),
       path: path.join(safe, e.name),
     }));
   });

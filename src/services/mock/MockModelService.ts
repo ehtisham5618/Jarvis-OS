@@ -1,6 +1,7 @@
 import type { IModelService, ModelRecord, ModelBenchmark } from "../interfaces/IModelService";
 import { OllamaService } from "../ollama/OllamaService";
 import { Logger } from "@/core/logger";
+import { configManager } from "@/core/config";
 
 const log = Logger.for("mock:model");
 
@@ -161,24 +162,33 @@ export class MockModelService implements IModelService {
   private localState = new Map<string, Partial<ModelRecord>>();
 
   async getModels(): Promise<ModelRecord[]> {
-    // Attempt real Ollama discovery
-    let installedIds: string[] = [];
-    try {
-      if (await this.ollama.isAvailable()) {
-        installedIds = await this.ollama.listAvailableModels();
-        log.info(`Ollama reported ${installedIds.length} installed models.`);
-      }
-    } catch {
-      log.warn("Ollama unavailable in MockModelService.getModels()");
+    const tags = await this.ollama.listModelTags();
+    const catalog = CATALOG.map((model) => ({
+      ...model,
+      installed: tags.some((tag) => tag.name === model.id),
+    }));
+    for (const tag of tags) {
+      if (catalog.some((model) => model.id === tag.name)) continue;
+      const sizeGB = tag.size / 1024 ** 3;
+      catalog.push({
+        id: tag.name,
+        name: tag.name,
+        variant: tag.details.parameter_size,
+        developer: tag.details.family || "Local",
+        parameters: tag.details.parameter_size,
+        contextLength: 0,
+        vramRequired: sizeGB,
+        ramRequired: sizeGB,
+        quantization: tag.details.quantization_level,
+        installed: true,
+        vision: false,
+        embeddings: /embed/i.test(tag.name),
+        reasoning: false,
+        coding: /coder|code/i.test(tag.name),
+        multilingual: false,
+      });
     }
-
-    return CATALOG.map((m) => {
-      const override = this.localState.get(m.id) ?? {};
-      const ollamaInstalled = installedIds.some(
-        (id) => id === m.id || id.startsWith(m.id.split(":")[0]),
-      );
-      return { ...m, ...override, installed: ollamaInstalled || override.installed === true };
-    });
+    return catalog;
   }
 
   async getModel(id: string): Promise<ModelRecord | undefined> {
@@ -192,23 +202,28 @@ export class MockModelService implements IModelService {
   }
 
   async installModel(id: string): Promise<void> {
-    await new Promise((r) => setTimeout(r, 1500));
-    this.localState.set(id, { ...(this.localState.get(id) ?? {}), installed: true });
+    const response = await fetch(`${configManager.get().ollama.host}/api/pull`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: id, stream: false }),
+      signal: AbortSignal.timeout(1800000),
+    });
+    if (!response.ok) throw new Error(`Model download failed (${response.status})`);
   }
 
   async uninstallModel(id: string): Promise<void> {
-    this.localState.set(id, { ...(this.localState.get(id) ?? {}), installed: false });
+    const response = await fetch(`${configManager.get().ollama.host}/api/delete`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: id }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) throw new Error(`Model removal failed (${response.status})`);
   }
 
   async benchmarkModel(id: string): Promise<ModelBenchmark> {
-    await new Promise((r) => setTimeout(r, 3000));
-    return {
-      speedTokensPerSec: 42 + Math.random() * 40,
-      codingScore: 75 + Math.random() * 20,
-      reasoningScore: 70 + Math.random() * 25,
-      avgLatencyMs: 300 + Math.random() * 500,
-      benchmarkedAt: new Date().toISOString(),
-    };
+    const { runBenchmark } = await import("@/core/model-router/Benchmarker");
+    return runBenchmark(id, this.ollama);
   }
 
   async refreshInstalledStatus(): Promise<void> {

@@ -84,7 +84,7 @@ export function ChatMessageList({ messages, isStreaming }: ChatMessageListProps)
   const virtualItems = virtualizer.getVirtualItems();
 
   return (
-    <div className="relative flex-1 overflow-hidden">
+    <div className="relative min-h-0 flex-1 overflow-hidden">
       <div
         ref={containerRef}
         onScroll={handleScroll}

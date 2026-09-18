@@ -10,6 +10,7 @@ import { useRef, useEffect, useState, type KeyboardEvent } from "react";
 import { ArrowUp, Paperclip, Mic, Square, Monitor, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAIStore } from "@/stores/ai.store";
+import { ModelSelector } from "./ModelSelector";
 
 interface ChatInputProps {
   onSend: (content: string) => void;
@@ -162,9 +163,7 @@ export function ChatInput({ onSend, onStop, placeholder, autoFocus = false }: Ch
             >
               <Monitor className="size-4" />
             </button>
-            <span className="ml-2 text-[11px] font-mono text-white/25">
-              {activeModel.split(":")[0]}
-            </span>
+            <ModelSelector />
           </div>
 
           {/* Right: voice + send/stop */}
@@ -188,6 +187,7 @@ export function ChatInput({ onSend, onStop, placeholder, autoFocus = false }: Ch
             ) : (
               <button
                 onClick={handleSubmit}
+                aria-label="Send message"
                 disabled={!canSend}
                 className="group flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#4f7dff] to-[#7b5cff] shadow-[0_8px_24px_-8px_rgba(79,125,255,0.6)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-30 disabled:shadow-none"
               >

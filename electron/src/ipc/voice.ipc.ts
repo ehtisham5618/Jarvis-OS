@@ -3,11 +3,6 @@ import { ipcMain } from "electron";
 import { IpcChannels } from "./channels";
 import record from "node-record-lpcm16";
 import log from "electron-log";
-import { pipeline, env } from "@xenova/transformers";
-
-// Disable local models fallback to huggingface by default in production, but here we let xenova download the model
-env.allowLocalModels = true;
-env.useBrowserCache = false;
 
 let recordingProcess: any = null;
 let audioChunks: Buffer[] = [];
@@ -65,6 +60,9 @@ export function registerVoiceHandlers(): void {
     try {
       // Lazy load Whisper model
       if (!transcriber) {
+        const { pipeline, env } = await import("@xenova/transformers");
+        env.allowLocalModels = true;
+        env.useBrowserCache = false;
         log.info("[voice] Loading Whisper model (Xenova/whisper-tiny.en)...");
         transcriber = await pipeline("automatic-speech-recognition", "Xenova/whisper-tiny.en");
         log.info("[voice] Whisper model loaded.");
