@@ -17,6 +17,7 @@ dist-ssr
 *.local
 release/
 electron/dist/
+diagnostics/
 
 # Wrangler / Cloudflare
 .wrangler/

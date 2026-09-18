@@ -1,8 +1,6 @@
 import { ipcMain, desktopCapturer } from "electron";
 import { IpcChannels } from "./channels";
 import log from "electron-log";
-import Tesseract from "tesseract.js";
-import sharp from "sharp";
 
 export function registerVisionHandlers(): void {
   ipcMain.handle(IpcChannels.VISION_SCREENSHOT, async () => {
@@ -21,6 +19,10 @@ export function registerVisionHandlers(): void {
   });
 
   ipcMain.handle(IpcChannels.VISION_OCR, async (_, imageBuffer: Buffer) => {
+    const [{ default: sharp }, { default: Tesseract }] = await Promise.all([
+      import("sharp"),
+      import("tesseract.js"),
+    ]);
     log.info("[vision] Running OCR on image buffer...");
 
     // Pre-process for OCR: grayscale and increase contrast using Sharp

@@ -11,15 +11,6 @@ import {
   Wifi,
 } from "lucide-react";
 
-function useTicker(base: number, jitter = 6) {
-  const [v, setV] = useState(base);
-  useEffect(() => {
-    const id = setInterval(() => setV(base + Math.random() * jitter - jitter / 2), 1400);
-    return () => clearInterval(id);
-  }, [base, jitter]);
-  return Math.max(0, Math.min(100, v));
-}
-
 function Gauge({
   label,
   value,
@@ -27,13 +18,13 @@ function Gauge({
   color,
 }: {
   label: string;
-  value: number;
+  value: number | undefined;
   unit?: string;
   color: string;
 }) {
   const r = 22;
   const c = 2 * Math.PI * r;
-  const dash = c - (value / 100) * c;
+  const dash = c - ((value ?? 0) / 100) * c;
   return (
     <div className="flex items-center gap-3 rounded-xl bg-white/[0.02] p-3 ring-1 ring-white/[0.05]">
       <div className="relative shrink-0">
@@ -63,13 +54,13 @@ function Gauge({
           />
         </svg>
         <div className="absolute inset-0 grid place-items-center text-[10px] font-mono tabular-nums">
-          {Math.round(value)}
+          {value === undefined ? "?" : Math.round(value)}
         </div>
       </div>
       <div className="min-w-0 flex-1">
         <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
         <div className="text-sm font-medium">
-          {Math.round(value)}
+          {value === undefined ? "?" : Math.round(value)}
           {unit}
         </div>
       </div>
@@ -151,16 +142,10 @@ export function WidgetsPanel() {
     return () => stopPolling();
   }, [startPolling, stopPolling]);
 
-  // Fallback to tickers until first poll comes through
-  const cpuMock = useTicker(18, 12);
-  const gpuMock = useTicker(42, 20);
-  const ramMock = useTicker(58, 8);
-  const batMock = useTicker(87, 2);
-
-  const cpu = metrics?.cpu.usagePercent ?? cpuMock;
-  const gpu = metrics?.gpu?.usagePercent ?? gpuMock;
-  const ram = metrics?.ram.usagePercent ?? ramMock;
-  const bat = metrics?.battery?.percent ?? batMock;
+  const cpu = metrics?.cpu.usagePercent;
+  const gpu = metrics?.gpu?.usagePercent;
+  const ram = metrics?.ram.usagePercent;
+  const bat = metrics?.battery?.percent;
 
   return (
     <aside className="relative z-20 flex h-full w-[340px] shrink-0 flex-col gap-6 overflow-y-auto border-l border-white/[0.06] bg-[rgba(14,17,23,0.5)] p-6 backdrop-blur-2xl">
@@ -177,7 +162,7 @@ export function WidgetsPanel() {
           </h3>
           <span className="flex items-center gap-1.5 text-[10px] font-mono text-[#4ade80]">
             <span className="size-1.5 animate-pulse rounded-full bg-[#4ade80] shadow-[0_0_6px_#4ade80]" />
-            LIVE
+            {metrics ? "LIVE" : "DETECTING HARDWARE"}
           </span>
         </div>
         <div className="grid grid-cols-2 gap-2">

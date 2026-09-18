@@ -16,14 +16,17 @@ export function Shell({
       {/* Electron-only: custom frameless window titlebar */}
       <TitleBar />
       <Wallpaper />
-      <div className="relative flex flex-1 overflow-hidden">
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
         <Sidebar />
-        <main className="relative z-10 flex-1 overflow-y-auto">
-          <div className="animate-fade-in min-h-full">{children}</div>
+        <main
+          className={`relative z-10 min-w-0 flex-1 ${showWidgets ? "overflow-y-auto" : "overflow-hidden"}`}
+        >
+          <div className={`animate-fade-in ${showWidgets ? "min-h-full" : "h-full"}`}>
+            {children}
+          </div>
         </main>
         {showWidgets && <WidgetsPanel />}
       </div>
-      <WorkingPill />
     </div>
   );
 }

@@ -17,18 +17,6 @@ export const Route = createFileRoute("/system")({
   component: System,
 });
 
-function useLive(base: number, jitter = 8) {
-  const [v, setV] = useState(base);
-  useEffect(() => {
-    const id = setInterval(
-      () => setV(Math.max(0, Math.min(100, base + (Math.random() - 0.5) * jitter))),
-      1200,
-    );
-    return () => clearInterval(id);
-  }, [base, jitter]);
-  return v;
-}
-
 function BigGauge({
   label,
   value,
@@ -37,14 +25,14 @@ function BigGauge({
   detail,
 }: {
   label: string;
-  value: number;
+  value: number | undefined;
   color: string;
   unit?: string;
   detail?: string;
 }) {
   const r = 62;
   const c = 2 * Math.PI * r;
-  const dash = c - (value / 100) * c;
+  const dash = c - ((value ?? 0) / 100) * c;
   return (
     <div className="relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
       <div className="flex items-center justify-between">
@@ -92,7 +80,7 @@ function BigGauge({
           <div className="absolute inset-0 grid place-items-center">
             <div>
               <div className="text-center text-4xl font-light tabular-nums text-white">
-                {Math.round(value)}
+                {value === undefined ? "?" : Math.round(value)}
                 <span className="text-lg text-muted-foreground">{unit}</span>
               </div>
               {detail && (
@@ -142,15 +130,10 @@ function System() {
     return () => stopPolling();
   }, [startPolling, stopPolling]);
 
-  const cpuMock = useLive(24, 15);
-  const gpuMock = useLive(58, 20);
-  const ramMock = useLive(62, 5);
-  const batMock = useLive(87, 1);
-
-  const cpu = metrics?.cpu.usagePercent ?? cpuMock;
-  const gpu = metrics?.gpu?.usagePercent ?? gpuMock;
-  const ram = metrics?.ram.usagePercent ?? ramMock;
-  const bat = metrics?.battery?.percent ?? batMock;
+  const cpu = metrics?.cpu.usagePercent;
+  const gpu = metrics?.gpu?.usagePercent;
+  const ram = metrics?.ram.usagePercent;
+  const bat = metrics?.battery?.percent;
 
   return (
     <Shell>
@@ -158,33 +141,39 @@ function System() {
         <PageHeader
           eyebrow="Hardware"
           title="System"
-          subtitle="Live at 60fps. Jarvis suggests optimizations before you notice a problem."
+          subtitle="Live hardware readings. Unavailable sensors are shown without estimated values."
         />
 
         <div className="grid grid-cols-2 gap-4">
           <BigGauge
-            label={`CPU · ${metrics?.cpu.model || "M4 Max"}`}
+            label={`CPU · ${metrics?.cpu.model || "Detecting"}`}
             value={cpu}
             color="#61c7ff"
-            detail={`${metrics?.cpu.coreCount || 14} cores · ${metrics?.cpu.frequency || 3.4} GHz`}
+            detail={`${metrics?.cpu.coreCount ?? "?"} cores · ${metrics?.cpu.frequency ?? "?"} GHz`}
           />
           <BigGauge
-            label={`GPU · ${metrics?.gpu?.model || "40-core"}`}
+            label={`GPU · ${metrics?.gpu?.model || "Unavailable"}`}
             value={gpu}
             color="#7b5cff"
-            detail={`${Math.round(metrics?.gpu?.temperatureC || 64)}°C · ${metrics?.gpu?.vramTotalGB || 18} GB VRAM`}
+            detail={`${Math.round(metrics?.gpu?.temperatureC ?? 0)}°C · ${metrics?.gpu?.vramTotalGB ?? "?"} GB VRAM`}
           />
           <BigGauge
-            label={`Memory · ${metrics?.ram.totalGB || 128} GB`}
+            label={`Memory · ${metrics?.ram.totalGB ?? "?"} GB`}
             value={ram}
             color="#4f7dff"
-            detail={`unified · ${metrics?.ram.type || "LPDDR5X"}`}
+            detail={`unified · ${metrics?.ram.type ?? "RAM"}`}
           />
           <BigGauge
             label="Battery"
             value={bat}
             color="#4ade80"
-            detail={`${Math.round((metrics?.battery?.timeRemainingMinutes || 382) / 60)}h ${Math.round((metrics?.battery?.timeRemainingMinutes || 382) % 60)}m remaining`}
+            detail={
+              metrics?.battery
+                ? metrics.battery.isCharging
+                  ? "Charging"
+                  : "On battery"
+                : "Sensor unavailable"
+            }
           />
         </div>
 
@@ -193,31 +182,31 @@ function System() {
           <MiniStat
             label="Storage"
             value={
-              metrics ? `${Math.round(metrics.storage[0]?.usedGB || 1240) / 1000} TB` : "1.24 TB"
+              metrics?.storage[0] ? `${metrics.storage[0].usedGB.toFixed(1)} GB` : "Unavailable"
             }
-            sub={`of ${metrics ? Math.round(metrics.storage[0]?.totalGB || 2000) / 1000 : 2} TB · ${Math.round(metrics?.storage[0]?.usagePercent || 62)}%`}
-            bar={metrics?.storage[0]?.usagePercent || 62}
+            sub={`of ${metrics ? Math.round(metrics.storage[0]?.totalGB || 2000) / 1000 : 2} TB · ${Math.round(metrics?.storage[0]?.usagePercent ?? 0)}%`}
+            bar={metrics?.storage[0]?.usagePercent ?? 0}
             color="#fbbf24"
           />
           <MiniStat
             label="Temperature"
-            value={`${Math.round(metrics?.temperatureC || 42)}°C`}
-            sub="nominal"
-            bar={metrics?.temperatureC || 42}
+            value={`${Math.round(metrics?.temperatureC ?? 0)}°C`}
+            sub="Hardware sensor"
+            bar={metrics?.temperatureC ?? 0}
             color="#61c7ff"
           />
           <MiniStat
             label="Fans"
-            value={`${metrics?.fans[0]?.rpm || 1240} RPM`}
-            sub="quiet mode"
-            bar={35}
+            value={metrics?.fans[0] ? `${metrics.fans[0].rpm} RPM` : "Unavailable"}
+            sub="Hardware sensor"
+            bar={0}
             color="#7b5cff"
           />
           <MiniStat
             label="Network"
-            value={`↓ ${Math.round(metrics?.network.downloadMbps || 420)} · ↑ ${Math.round(metrics?.network.uploadMbps || 112)}`}
+            value={`↓ ${Math.round(metrics?.network.downloadMbps ?? 0)} · ↑ ${Math.round(metrics?.network.uploadMbps ?? 0)}`}
             sub="Mb/s"
-            bar={78}
+            bar={0}
             color="#4ade80"
           />
         </div>

@@ -10,7 +10,6 @@ import type { IMemoryService, MemoryEntry } from "@/services/interfaces/IMemoryS
 import { serviceRegistry, ServiceToken } from "@/core/service-registry";
 import type { IAIService } from "@/services/interfaces/IAIService";
 import { Logger } from "@/core/logger";
-import MemorySearchWorker from "@/workers/memorySearch.worker?worker";
 
 const log = Logger.for("memory:electron");
 
@@ -47,26 +46,14 @@ export class ElectronMemoryService implements IMemoryService {
 
   async search(query: string, topK: number = 3): Promise<MemoryEntry[]> {
     if (!this.api) throw new Error("Memory IPC not available.");
+    const installed = await this.ai.listAvailableModels();
+    if (!installed.some((model) => model.split(":")[0] === "nomic-embed-text")) return [];
 
     log.debug(`Searching memory for: "${query}"`);
 
-    // Offload embedding calculation to a Web Worker (M11)
-    const embeddingVector: number[] = await new Promise((resolve, reject) => {
-      const worker = new MemorySearchWorker();
-      worker.onmessage = (e) => {
-        worker.terminate();
-        if (e.data.success) {
-          resolve(e.data.embedding);
-        } else {
-          reject(new Error(e.data.error));
-        }
-      };
-      worker.onerror = (err) => {
-        worker.terminate();
-        reject(err);
-      };
-      worker.postMessage({ query, model: "nomic-embed-text" });
-    });
+    // HTTP embedding generation is already asynchronous; use the configured,
+    // bounded AI request rather than a worker with its own hardcoded host.
+    const embeddingVector = Array.from(await this.ai.embed(query, "nomic-embed-text"));
 
     return this.api.search(embeddingVector, topK);
   }
@@ -89,8 +76,9 @@ export class ElectronMemoryService implements IMemoryService {
 
   async isAvailable(): Promise<boolean> {
     try {
-      const isUp = await this.ai.isAvailable();
-      return !!this.api && isUp;
+      if (!this.api) return false;
+      await this.api.list(1);
+      return true;
     } catch {
       return false;
     }

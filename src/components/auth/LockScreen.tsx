@@ -1,13 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { createHash } from "crypto";
 import { Shield, Fingerprint, AlertCircle, Lock } from "lucide-react";
 
 interface LockScreenProps {
   onUnlocked: () => void;
-}
-
-function sha256(text: string): string {
-  return createHash("sha256").update(text).digest("hex");
 }
 
 export function LockScreen({ onUnlocked }: LockScreenProps) {

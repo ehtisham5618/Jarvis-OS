@@ -5,6 +5,8 @@
  * Fetches installed models from the ModelStore (or AI Store).
  */
 
+import { useModelsStore } from "@/stores/models.store";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Cpu, ChevronDown, Check, Download, AlertTriangle } from "lucide-react";
 import { useAIStore } from "@/stores/ai.store";
@@ -13,15 +15,15 @@ export function ModelSelector() {
   const [isOpen, setIsOpen] = useState(false);
   const { activeModel, setActiveModel, providerStatus } = useAIStore();
 
-  // For now, hardcode the models until M6 when we build the full Model Router.
-  // We'll assume the user has these installed in Ollama.
-  const models = [
-    { id: "llama3.1:8b", name: "Llama 3.1", size: "8B", params: "8.0B", vram: "6 GB" },
-    { id: "llama3.1:70b", name: "Llama 3.1 70B", size: "70B", params: "70.5B", vram: "40 GB" },
-    { id: "phi3:mini", name: "Phi-3 Mini", size: "3.8B", params: "3.8B", vram: "4 GB" },
-    { id: "mistral:latest", name: "Mistral", size: "7B", params: "7.2B", vram: "5 GB" },
-    { id: "llava:latest", name: "Llava (Vision)", size: "7B", params: "7.1B", vram: "6 GB" },
-  ];
+  const availableModels = useModelsStore((state) => state.models);
+  const models = availableModels
+    .filter((model) => model.installed && !model.embeddings)
+    .map((model) => ({
+      id: model.id,
+      name: model.name,
+      params: model.parameters,
+      vram: `${model.vramRequired.toFixed(1)} GB`,
+    }));
 
   const handleSelect = (modelId: string) => {
     setActiveModel(modelId);
@@ -54,7 +56,7 @@ export function ModelSelector() {
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 top-full z-50 mt-2 w-64 origin-top-right rounded-xl border border-white/10 bg-[#0d0f12]/95 p-1.5 shadow-2xl backdrop-blur-xl animate-fade-in-scale">
+          <div className="absolute left-0 bottom-full z-50 mb-2 w-64 origin-bottom-left rounded-xl border border-white/10 bg-[#0d0f12]/95 p-1.5 shadow-2xl backdrop-blur-xl animate-fade-in-scale">
             <div className="mb-2 border-b border-white/10 px-3 pb-2 pt-1.5">
               <span className="text-[10px] font-medium uppercase tracking-widest text-white/40">
                 Select Model
@@ -82,10 +84,13 @@ export function ModelSelector() {
             </div>
 
             <div className="mt-1 border-t border-white/10 pt-1">
-              <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-[#61c7ff] transition hover:bg-white/5">
+              <Link
+                to="/models"
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-[#61c7ff] transition hover:bg-white/5"
+              >
                 <Download className="size-3.5" />
                 Manage models
-              </button>
+              </Link>
             </div>
           </div>
         </>

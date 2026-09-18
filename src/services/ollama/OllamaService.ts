@@ -8,7 +8,12 @@ import type {
 import { configManager } from "@/core/config";
 import { Logger } from "@/core/logger";
 import { ServiceError, ServiceUnavailableError } from "@/core/errors";
-import type { OllamaChatRequest, OllamaChatResponseChunk, OllamaTagsResponse } from "./OllamaTypes";
+import type {
+  OllamaChatRequest,
+  OllamaChatResponseChunk,
+  OllamaTagsResponse,
+  OllamaModelTag,
+} from "./OllamaTypes";
 
 const log = Logger.for("ollama-service");
 
@@ -32,6 +37,9 @@ export class OllamaService implements IAIService {
   }
 
   async *chat(thread: ChatThread, options: ChatOptions): AsyncIterable<StreamToken> {
+    const timeout = AbortSignal.timeout(120000);
+    const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
+    signal.throwIfAborted();
     const isUp = await this.isAvailable();
     if (!isUp) {
       throw new ServiceUnavailableError("Ollama");
@@ -61,6 +69,7 @@ export class OllamaService implements IAIService {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(request),
+        signal,
       });
     } catch (err) {
       throw new ServiceError("Failed to connect to Ollama for chat", "Ollama", {
@@ -80,9 +89,8 @@ export class OllamaService implements IAIService {
     try {
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
+        buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+        if (done && buffer.trim()) buffer += "\n";
         const lines = buffer.split("\n");
 
         // Keep the last partial line in the buffer
@@ -91,11 +99,12 @@ export class OllamaService implements IAIService {
         for (const line of lines) {
           if (!line.trim()) continue;
 
-          try {
-            const chunk = JSON.parse(line) as OllamaChatResponseChunk;
+          {
+            const chunk = JSON.parse(line) as OllamaChatResponseChunk & { error?: string };
+            if (chunk.error) throw new ServiceError(chunk.error, "Ollama");
 
             yield {
-              token: chunk.message.content,
+              token: chunk.message?.content ?? "",
               isFinal: chunk.done,
               ...(chunk.done
                 ? {
@@ -104,12 +113,12 @@ export class OllamaService implements IAIService {
                   }
                 : {}),
             };
-          } catch (e) {
-            log.warn("Failed to parse Ollama chunk", { line, error: e });
           }
         }
+        if (done) break;
       }
     } finally {
+      await reader.cancel().catch(() => undefined);
       reader.releaseLock();
     }
   }
@@ -131,6 +140,7 @@ export class OllamaService implements IAIService {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ model, prompt: text }),
+        signal: AbortSignal.timeout(10000),
       });
 
       if (!response.ok) throw new Error(response.statusText);
@@ -143,12 +153,18 @@ export class OllamaService implements IAIService {
   }
 
   async listAvailableModels(): Promise<string[]> {
+    return (await this.listModelTags()).map((model) => model.name);
+  }
+
+  async listModelTags(): Promise<OllamaModelTag[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/tags`);
+      const response = await fetch(`${this.baseUrl}/api/tags`, {
+        signal: AbortSignal.timeout(5000),
+      });
       if (!response.ok) return [];
 
       const data = (await response.json()) as OllamaTagsResponse;
-      return data.models.map((m) => m.name);
+      return data.models;
     } catch {
       return [];
     }

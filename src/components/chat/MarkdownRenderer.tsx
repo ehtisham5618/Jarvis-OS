@@ -9,6 +9,7 @@ import { useState, Suspense, lazy, memo, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Copy, Check } from "lucide-react";
+import DOMPurify from "dompurify";
 import MarkdownRenderWorker from "@/workers/markdownRender.worker?worker";
 
 // Lazy load the heavy syntax highlighter
@@ -57,9 +58,13 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
       const worker = new MarkdownRenderWorker();
       worker.onmessage = (e) => {
         if (e.data.success) {
-          setWorkerHtml(e.data.html);
+          setWorkerHtml(DOMPurify.sanitize(e.data.html));
         }
         worker.terminate();
+      };
+      worker.onerror = () => {
+        worker.terminate();
+        setWorkerHtml(null);
       };
       worker.postMessage({ content });
       return () => worker.terminate();

@@ -8,7 +8,8 @@
 
 import { ipcMain, BrowserWindow } from "electron";
 import { createHash, timingSafeEqual } from "crypto";
-import { execSync } from "child_process";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import log from "electron-log";
 import { auditService } from "./AuditService";
 
@@ -50,7 +51,10 @@ async function verifyWindowsHello(): Promise<boolean> {
       $result = [Windows.Security.Credentials.UI.UserConsentVerifier,Windows.Security.Credentials.UI,ContentType=WindowsRuntime]::RequestVerificationAsync("Unlock Jarvis").GetAwaiter().GetResult()
       if ($result -eq 'Verified') { exit 0 } else { exit 1 }
     `.trim();
-    execSync(`powershell -NoProfile -Command "${ps}"`, { timeout: 30000 });
+    await promisify(execFile)("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", ps], {
+      timeout: 30000,
+      windowsHide: true,
+    });
     return true;
   } catch {
     return false;

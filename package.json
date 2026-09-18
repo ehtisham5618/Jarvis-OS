@@ -1,7 +1,7 @@
 {
   "name": "jarvis-os",
   "productName": "Jarvis",
-  "version": "0.1.19",
+  "version": "0.1.22",
   "description": "The Intelligence of Your Computer",
   "author": {
     "name": "Jarvis OS",
@@ -15,16 +15,18 @@
   "main": "electron/dist/main.js",
   "scripts": {
     "dev": "vite dev",
-    "dev:electron": "concurrently -k -n VITE,ELECTRON -c cyan,magenta \"npm run dev\" \"wait-on http://localhost:8080 && npm run electron:start\"",
+    "dev:electron": "npm run electron:build-main && concurrently -k -n VITE,ELECTRON -c cyan,magenta \"npm run dev\" \"wait-on http://127.0.0.1:8080 && npm run electron:start\"",
     "electron:start": "cross-env NODE_ENV=development electron electron/dist/main.js",
     "electron:build-main": "tsc -p tsconfig.electron.json && node -e \"require('fs').writeFileSync('electron/dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\"",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
-    "build:electron": "cross-env NITRO_PRESET=node-server npm run build && npm run electron:build-main && electron-builder",
-    "build:electron:dir": "cross-env NITRO_PRESET=node-server npm run build && npm run electron:build-main && electron-builder --dir",
+    "build:electron": "cross-env NITRO_PRESET=node-server npm run build && npm run electron:build-main && electron-builder --publish never",
+    "build:electron:dir": "cross-env NITRO_PRESET=node-server npm run build && npm run electron:build-main && electron-builder --dir --publish never",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "vitest run --config vitest.config.ts",
+    "test:electron": "electron scripts/electron-smoke.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -137,20 +139,13 @@
   "build": {
     "appId": "com.jarvis-os.app",
     "productName": "Jarvis",
-    "copyright": "Copyright © 2026 Jarvis OS",
+    "copyright": "Copyright \u00c2\u00a9 2026 Jarvis OS",
     "directories": {
       "output": "release/"
     },
     "files": [
       ".output/**/*",
       "electron/dist/**/*"
-    ],
-    "asarUnpack": [
-      ".output/**/*",
-      "**/*.{node,dll}",
-      "**/node_modules/sharp/**/*",
-      "**/node_modules/@img/**/*",
-      "**/node_modules/@lancedb/**/*"
     ],
     "publish": {
       "provider": "github",
@@ -172,7 +167,10 @@
     },
     "extraMetadata": {
       "main": "electron/dist/main.js"
-    }
+    },
+    "asar": false,
+    "afterPack": "scripts/verify-package.cjs",
+    "artifactName": "Jarvis-Setup-${version}.${ext}"
   },
   "overrides": {
     "sharp": "$sharp",

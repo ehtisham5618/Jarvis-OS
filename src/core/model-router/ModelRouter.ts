@@ -27,11 +27,17 @@ export function selectModel(
   available: ModelRecord[],
 ): RouterDecision | null {
   // Filter: must be installed and hardware-suitable
-  const candidates = available.filter((m) => m.installed && m.suitableForCurrentHardware !== false);
+  const compatible = available.filter(
+    (m) =>
+      m.installed &&
+      (intent === "embeddings" ? m.embeddings : !m.embeddings) &&
+      (intent !== "vision" || m.vision),
+  );
+  const candidates = compatible.filter((m) => m.suitableForCurrentHardware !== false);
 
   if (candidates.length === 0) {
     log.warn("No suitable candidates found — using first installed model as fallback.");
-    const fallback = available.find((m) => m.installed);
+    const fallback = compatible[0];
     if (!fallback) return null;
     return {
       model: fallback,
@@ -98,7 +104,11 @@ function computeSpeedScore(model: ModelRecord): number {
     "72b": 0.13,
   };
   const key = Object.keys(paramEstimates).find((k) => model.parameters.toLowerCase().includes(k));
-  return key ? paramEstimates[key] : 0.3;
+  if (key) return paramEstimates[key];
+  const parameters = Number.parseFloat(model.parameters);
+  return Number.isFinite(parameters) && /b/i.test(model.parameters)
+    ? 1 / (1 + parameters / 12)
+    : 0.3;
 }
 
 function buildReason(model: ModelRecord, intent: RequestIntent, cap: number, spd: number): string {

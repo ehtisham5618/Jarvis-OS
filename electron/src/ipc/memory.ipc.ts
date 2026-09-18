@@ -7,7 +7,7 @@
  */
 
 import { app, ipcMain } from "electron";
-import * as lancedb from "@lancedb/lancedb";
+import type * as lancedb from "@lancedb/lancedb";
 import path from "path";
 import fs from "fs";
 import { IpcChannels } from "./channels";
@@ -19,9 +19,10 @@ let dbInstance: lancedb.Connection | null = null;
 async function getDb(): Promise<lancedb.Connection> {
   if (!dbInstance) {
     if (!fs.existsSync(dbPath)) {
-      fs.mkdirSync(dbPath, { recursive: true });
+      await fs.promises.mkdir(dbPath, { recursive: true });
     }
-    dbInstance = await lancedb.connect(dbPath);
+    const { connect } = await import("@lancedb/lancedb");
+    dbInstance = await connect(dbPath);
   }
   return dbInstance;
 }
@@ -59,9 +60,19 @@ export function registerMemoryHandlers(): void {
       const table = await getTable();
       if (!table) return [];
 
-      const results = await table.search(queryVector).limit(topK).execute();
+      const results = await table
+        .vectorSearch(queryVector)
+        .column("embedding")
+        .limit(Math.max(1, Math.min(topK, 100)))
+        .toArray();
       return results.map((r: any) => ({
-        ...r,
+        id: r.id,
+        content: r.content,
+        source: r.source,
+        threadId: r.threadId,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+        embedding: Array.from(r.embedding ?? []),
         tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
       }));
     },
@@ -75,10 +86,19 @@ export function registerMemoryHandlers(): void {
     // Hack: to get all rows, we search with a dummy vector and large limit, or use table.query()
     // LanceDB node API supports select/limit.
     try {
-      const results = await table.query().limit(limit).execute();
+      const results = await table
+        .query()
+        .limit(Math.max(1, Math.min(limit, 1000)))
+        .toArray();
       return results
         .map((r: any) => ({
-          ...r,
+          id: r.id,
+          content: r.content,
+          source: r.source,
+          threadId: r.threadId,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
+          embedding: Array.from(r.embedding ?? []),
           tags: typeof r.tags === "string" ? JSON.parse(r.tags) : r.tags,
         }))
         .sort(
@@ -94,7 +114,7 @@ export function registerMemoryHandlers(): void {
   ipcMain.handle(IpcChannels.MEMORY_DELETE, async (_evt, id: string) => {
     const table = await getTable();
     if (!table) return;
-    await table.delete(`id = '${id}'`);
+    await table.delete(`id = '${id.replace(/'/g, "''")}'`);
   });
 
   // ─── CLEAR MEMORY ────────────────────────────────────────────────────────
@@ -113,7 +133,7 @@ export function registerMemoryHandlers(): void {
         const table = await getTable();
         if (!table) return;
 
-        const allRows = await table.query().execute();
+        const allRows = await table.query().toArray();
         if (allRows.length > 10000) {
           // Sort by oldest first
           const sorted = allRows.sort(
@@ -124,7 +144,7 @@ export function registerMemoryHandlers(): void {
           // Archive to flat file
           const archivePath = path.join(app.getPath("userData"), "memory", "archive.jsonl");
           for (const row of toDelete) {
-            fs.appendFileSync(archivePath, JSON.stringify(row) + "\n");
+            await fs.promises.appendFile(archivePath, JSON.stringify(row) + "\n");
             await table.delete(`id = '${(row as any).id}'`);
           }
         }

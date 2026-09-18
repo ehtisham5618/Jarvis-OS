@@ -14,6 +14,8 @@ import appCss from "../styles.css?url";
 import { initializeJarvis } from "@/core/init";
 import { LockScreen } from "@/components/auth/LockScreen";
 import { UpdateNotification } from "@/components/app/UpdateNotification";
+import { useAIStore } from "@/stores/ai.store";
+import { useModelsStore } from "@/stores/models.store";
 import { useSettingsStore } from "@/stores/settings.store";
 
 function NotFoundComponent() {
@@ -47,7 +49,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
       <div className="glass max-w-md rounded-2xl p-10 text-center">
         <h1 className="text-xl font-medium text-foreground">Jarvis intercepted an error</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Recovery available. No workspace data was lost.
+          This view could not load. Try again or open the diagnostic log.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -59,6 +61,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           >
             Retry
           </button>
+          <button onClick={() => window.jarvisOS?.app.openLogs()}>Open diagnostic log</button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-foreground transition hover:bg-white/10"
@@ -128,15 +131,24 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const [initialized, setInitialized] = useState(false);
+  const [bootError, setBootError] = useState(false);
 
   useEffect(() => {
     performance.mark("T2");
     console.log(`[renderer] T2: First paint at ${performance.now().toFixed(2)}ms`);
-    initializeJarvis().then(() => {
-      performance.mark("T3");
-      console.log(`[renderer] T3: Shell interactive at ${performance.now().toFixed(2)}ms`);
-      setInitialized(true);
-    });
+    initializeJarvis()
+      .then(() => {
+        performance.mark("T3");
+        console.log(`[renderer] T3: Shell interactive at ${performance.now().toFixed(2)}ms`);
+        setInitialized(true);
+        window.jarvisOS?.app.rendererReady();
+        void useAIStore.getState().checkProviderStatus();
+        void useModelsStore.getState().fetchModels();
+      })
+      .catch((error: unknown) => {
+        console.error("[startup] Core initialization failed", error);
+        setBootError(true);
+      });
 
     // M12: Renderer crash handler → logs unhandled errors
     const origOnError = window.onerror;
@@ -149,6 +161,10 @@ function RootComponent() {
     window.onunhandledrejection = (e) => {
       console.error("[renderer] Unhandled rejection:", e.reason);
       if (origOnUnhandled) origOnUnhandled.call(window, e);
+    };
+    return () => {
+      window.onerror = origOnError;
+      window.onunhandledrejection = origOnUnhandled;
     };
   }, []);
 
@@ -171,9 +187,12 @@ function RootComponent() {
       const unsubLock = window.jarvisOS.auth.onLocked(() => setLocked(true));
       const unsubUnlock = window.jarvisOS.auth.onUnlocked(() => setLocked(false));
       // Check initial lock status
-      window.jarvisOS.auth.status().then((s: any) => {
-        if (s?.locked) setLocked(true);
-      });
+      window.jarvisOS.auth
+        .status()
+        .then((s: any) => {
+          if (s?.locked) setLocked(true);
+        })
+        .catch((error: unknown) => console.error("[auth] Status unavailable", error));
       return () => {
         unsubLock?.();
         unsubUnlock?.();
@@ -195,6 +214,15 @@ function RootComponent() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  if (bootError) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-background text-foreground">
+        <h1>Jarvis could not initialize</h1>
+        <button onClick={() => window.location.reload()}>Reload Jarvis</button>
+        <button onClick={() => window.jarvisOS?.app.openLogs()}>Open diagnostic log</button>
+      </div>
+    );
+  }
   if (!initialized) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">

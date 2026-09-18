@@ -1,78 +1,66 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to build (for example v0.1.22)
+        required: true
+        type: string
 
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
+
 jobs:
   build-and-release:
-    name: Build & Publish Windows Release
     runs-on: windows-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
         with:
           node-version: "24"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type-check
-        run: npx tsc --noEmit
-
-      - name: Build Vite renderer
-        run: npm run build
-
-      - name: Build Electron main process
-        run: npm run electron:build-main
-
-      - name: Decode code signing certificate
+          cache: npm
+      - name: Validate version and notes
         env:
-          CERT_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
-        if: env.CERT_BASE64 != ''
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
-          echo "$CERT_BASE64" | base64 --decode > cert.pfx
-        shell: bash
-
-      - name: Package with electron-builder
-        run: npm run build:electron
+          node -e "const p=require('./package.json'); const t=process.env.RELEASE_TAG; if(t!=='v'+p.version) throw new Error('Tag/package version mismatch'); require('fs').accessSync('docs/releases/'+t+'.md')"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm run build
+      - run: npm run electron:build-main
+      - name: Package Windows
+        run: npx electron-builder --win nsis --publish never --config.electronDist=node_modules/electron/dist
+        env:
+          CSC_LINK: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      - name: Verify release metadata and checksums
+        run: node scripts/verify-release.cjs release
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jarvis-${{ inputs.tag }}-windows
+          path: |
+            release/*.exe
+            release/*.blockmap
+            release/latest.yml
+            release/SHA256SUMS.txt
+          if-no-files-found: error
+      - name: Create draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-
-      - name: Generate changelog
-        id: changelog
-        uses: mikepenz/release-changelog-builder-action@v4
-        with:
-          configuration: ".github/changelog-config.json"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "Jarvis ${{ github.ref_name }} — Production Release"
-          body: ${{ steps.changelog.outputs.changelog }}
-          files: |
-            release/*.exe
-            release/*.zip
-            release/latest.yml
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Clean up certificate
-        if: always()
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
-          if (Test-Path cert.pfx) { Remove-Item cert.pfx }
-        shell: pwsh
+          $assets = Get-ChildItem release -File | Where-Object { $_.Name -match '\.(exe|blockmap)$|^latest\.yml$|^SHA256SUMS\.txt$' } | ForEach-Object { $_.FullName }
+          gh release create $env:RELEASE_TAG --verify-tag --draft --title "Jarvis $env:RELEASE_TAG" --notes-file "docs/releases/$env:RELEASE_TAG.md" @assets
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

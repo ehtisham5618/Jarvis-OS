@@ -8,7 +8,6 @@
  */
 
 import { marked } from "marked";
-import DOMPurify from "dompurify";
 
 self.onmessage = async (e: MessageEvent) => {
   const { content } = e.data;
@@ -18,9 +17,9 @@ self.onmessage = async (e: MessageEvent) => {
     const html = await marked(content, { async: true });
 
     // Sanitize HTML
-    const sanitized = DOMPurify.sanitize(html);
+    // DOM sanitization runs in the renderer where a DOM is available.
 
-    self.postMessage({ success: true, html: sanitized });
+    self.postMessage({ success: true, html });
   } catch (error: any) {
     self.postMessage({ success: false, error: error.message });
   }

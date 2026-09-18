@@ -71,7 +71,7 @@ const AssistantBubble = memo(function AssistantBubble({
   const showContent = message.content.length > 0;
 
   return (
-    <div className="flex items-end gap-3 animate-fade-in">
+    <div data-message-role="assistant" className="flex items-end gap-3 animate-fade-in">
       {/* Jarvis icon */}
       <div className="mb-5 grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#4f7dff] to-[#7b5cff] shadow-[0_0_16px_-4px_rgba(79,125,255,0.6)]">
         <Sparkles className="size-3.5 text-white" strokeWidth={2.5} />

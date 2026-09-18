@@ -13,8 +13,8 @@ import * as path from "path";
 import windowStateKeeper from "electron-window-state";
 import log from "electron-log";
 import * as fs from "fs";
-import * as net from "net";
-import { ChildProcess, spawn } from "child_process";
+import { startRendererServer, startupPage } from "./startup";
+import type { ChildProcess } from "child_process";
 import { registerCriticalHandlers, registerDeferredHandlers } from "./ipc/index";
 import { IpcChannels } from "./ipc/channels";
 import { registerUpdaterHandlers, scheduleUpdateChecks } from "./ipc/updater.ipc";
@@ -27,52 +27,43 @@ log.transports.console.level = "debug";
 log.info("Jarvis OS main process starting...");
 
 // ─── GPU & Memory Flags (M11) ──────────────────────────────────────────────
-app.commandLine.appendSwitch("enable-gpu-rasterization");
-app.commandLine.appendSwitch("enable-zero-copy");
-app.commandLine.appendSwitch("ignore-gpu-blocklist");
-app.commandLine.appendSwitch("max-old-space-size", "512");
+// Use Chromium's driver compatibility decisions instead of forcing GPU features.
+if (process.argv.includes("--safe-mode")) app.disableHardwareAcceleration();
 
 // ─── Dev Mode Detection ────────────────────────────────────────────────────
-const isDev = !app.isPackaged;
-const DEV_SERVER_URL = "http://localhost:8080";
+const isDev = !app.isPackaged && process.env.JARVIS_PRODUCTION !== "1";
+const DEV_SERVER_URL = "http://127.0.0.1:8080";
 
 // ─── Log Cleanup (M11) ─────────────────────────────────────────────────────
-function cleanOldLogs() {
+async function cleanOldLogs() {
   try {
     const logPath = path.dirname(log.transports.file.getFile().path);
-    const files = fs.readdirSync(logPath);
+    const files = await fs.promises.readdir(logPath);
     const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
 
-    files.forEach((file) => {
+    for (const file of files) {
       if (file.endsWith(".log")) {
         const filePath = path.join(logPath, file);
-        const stats = fs.statSync(filePath);
+        const stats = await fs.promises.stat(filePath);
         if (stats.mtimeMs < thirtyDaysAgo) {
-          fs.unlinkSync(filePath);
+          await fs.promises.unlink(filePath);
           log.info(`[main] Deleted old log file: ${file}`);
         }
       }
-    });
+    }
   } catch (err) {
     log.error("[main] Failed to clean old logs:", err);
   }
 }
 
 // ─── Find Free Port ────────────────────────────────────────────────────────
-function getFreePort(): Promise<number> {
-  return new Promise((resolve) => {
-    const srv = net.createServer();
-    srv.listen(0, () => {
-      const port = (srv.address() as net.AddressInfo).port;
-      srv.close(() => resolve(port));
-    });
-  });
-}
-
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isAppQuitting = false;
-let prodServerPort: number | null = null;
+let rendererUrl = isDev ? DEV_SERVER_URL : "";
+let loading: Promise<void> | undefined;
+let loadingPage: Promise<void> | undefined;
+let rendererReadyTimer: ReturnType<typeof setTimeout> | undefined;
 let nitroServer: ChildProcess | null = null;
 
 // ─── Window Creation ───────────────────────────────────────────────────────
@@ -97,7 +88,7 @@ function createWindow(): void {
 
     // Visual
     backgroundColor: "#050608",
-    show: false, // Show after content loads (prevents white flash)
+    show: true, // Native shell is available while services start
     icon: path.join(__dirname, "../../public/icon.ico"),
 
     webPreferences: {
@@ -113,32 +104,22 @@ function createWindow(): void {
   windowState.manage(mainWindow);
 
   // ─── Load Content ──────────────────────────────────────────────────────
-  if (isDev) {
-    log.info(`[main] Dev mode: loading ${DEV_SERVER_URL}`);
-    mainWindow.loadURL(DEV_SERVER_URL);
-    mainWindow.webContents.openDevTools({ mode: "detach" });
-  } else {
-    const url = `http://127.0.0.1:${prodServerPort}`;
-    log.info(`[main] Production mode: loading Nitro server at ${url}`);
-    // Use a simple loading page until the server port is confirmed ready
-    mainWindow.loadURL("data:text/html,<html><body style='background:#050608'></body></html>");
-    // The actual URL will be loaded by startApp() once the server is ready
-    mainWindow.webContents.once("did-finish-load", () => {
-      if (prodServerPort) mainWindow?.loadURL(url);
-    });
-  }
-
-  // ─── Window Events ────────────────────────────────────────────────────
-  // Show window after it's ready to avoid visual flash
-  mainWindow.once("ready-to-show", () => {
-    mainWindow?.show();
-    log.info(`[main] T1: Window shown at ${performance.now().toFixed(2)}ms`);
-
-    // Register non-critical handlers and plugins (M11)
-    setTimeout(() => {
-      registerDeferredHandlers();
-    }, 100);
+  mainWindow.webContents.on("console-message", (event) => {
+    if (event.level === "error") log.error("[renderer]", event.message);
   });
+  mainWindow.webContents.on("preload-error", (_event, _file, error) => {
+    log.error("[startup:preload]", error);
+    void showRecovery();
+  });
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    log.error("[startup:renderer]", details);
+    void showRecovery();
+  });
+  mainWindow.on("unresponsive", () => log.error("[electron] Window became unresponsive"));
+  mainWindow.on("responsive", () => log.info("[electron] Window responsive again"));
+  loadingPage = mainWindow.loadURL(startupPage());
+  void loadingPage.catch((error) => log.error("[startup] Loading page", error));
+  log.info(`[startup] Window created at ${performance.now().toFixed(0)}ms`);
 
   // Minimize to tray on close (don't quit)
   mainWindow.on("close", (event) => {
@@ -238,7 +219,61 @@ function registerGlobalShortcut(): void {
 }
 
 // ─── IPC: Application Controls ────────────────────────────────────────────
+async function showRecovery(): Promise<void> {
+  clearTimeout(rendererReadyTimer);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    await mainWindow
+      .loadURL(startupPage(true))
+      .catch((error) => log.error("[startup:recovery]", error));
+  }
+}
+
+function loadDesktop(): Promise<void> {
+  if (loading) return loading;
+  loading = (async () => {
+    try {
+      if (!isDev && !nitroServer) {
+        const entry = path.normalize(
+          path
+            .join(__dirname, "../../.output/server/index.mjs")
+            .replace(/app\.asar[/\\]/g, "app.asar.unpacked/"),
+        );
+        const server = await startRendererServer(process.execPath, entry);
+        nitroServer = server.process;
+        rendererUrl = server.url;
+        nitroServer.once("exit", () => {
+          nitroServer = null;
+          if (!isAppQuitting) void showRecovery();
+        });
+      }
+      if (isAppQuitting) {
+        nitroServer?.kill();
+        return;
+      }
+      await loadingPage;
+      clearTimeout(rendererReadyTimer);
+      rendererReadyTimer = setTimeout(() => {
+        log.error("[startup] Renderer did not acknowledge initialization within 30 seconds");
+        void showRecovery();
+      }, 30000);
+      await mainWindow?.loadURL(rendererUrl);
+    } catch (error) {
+      log.error("[startup] Desktop failed to load", error);
+      await showRecovery();
+    } finally {
+      loading = undefined;
+    }
+  })();
+  return loading;
+}
+
 function registerAppControls(): void {
+  ipcMain.handle("app:retry-startup", () => loadDesktop());
+  ipcMain.handle("app:open-logs", () => shell.openPath(log.transports.file.getFile().path));
+  ipcMain.on("app:renderer-ready", () => {
+    clearTimeout(rendererReadyTimer);
+    log.info(`[startup] Renderer interactive at ${performance.now().toFixed(0)}ms`);
+  });
   ipcMain.handle(IpcChannels.APP_GET_VERSION, () => app.getVersion());
 
   ipcMain.on(IpcChannels.APP_QUIT, () => {
@@ -295,88 +330,43 @@ function applyContentSecurityPolicy(): void {
 // ─── App Lifecycle ────────────────────────────────────────────────────────
 app.setAppUserModelId("com.jarvis-os.app");
 
-app.whenReady().then(() => {
-  log.info(`[main] T0: App ready at ${performance.now().toFixed(2)}ms`);
+const hasInstanceLock = app.requestSingleInstanceLock();
+if (!hasInstanceLock) app.quit();
+else {
+  app.on("second-instance", () => {
+    if (mainWindow?.isMinimized()) mainWindow.restore();
+    mainWindow?.show();
+    mainWindow?.focus();
+  });
+  app
+    .whenReady()
+    .then(async () => {
+      registerAppControls();
+      applyContentSecurityPolicy();
+      createWindow();
+      createTray();
+      registerGlobalShortcut();
+      // Handler registration happens once, independently of window recreation.
+      registerCriticalHandlers();
+      registerDeferredHandlers();
+      registerUpdaterHandlers(mainWindow);
+      if (app.isPackaged) scheduleUpdateChecks(mainWindow);
+      initCrashReporter();
+      initTelemetry(true);
+      cleanOldLogs();
+      await loadDesktop();
+    })
+    .catch((error) => {
+      log.error("[startup] Bootstrap failed", error);
+      void showRecovery();
+    });
+}
 
-  // M12: Initialize crash reporter and telemetry first
-  initCrashReporter();
-  initTelemetry(true);
-
-  cleanOldLogs();
-
-  // Register only critical IPC handlers before creating the window
-  registerCriticalHandlers();
-  registerAppControls();
-  applyContentSecurityPolicy();
-
-  // M12: Start production server if not in dev mode
-  const startApp = async () => {
-    // Create window immediately so the app feels responsive
-    createWindow();
-    createTray();
-    registerGlobalShortcut();
-
-    // M12: Register auto-updater after window is created
-    registerUpdaterHandlers(mainWindow!);
-    scheduleUpdateChecks(mainWindow!);
-
-    if (!isDev) {
-      try {
-        prodServerPort = await getFreePort();
-
-        // Build the path to the unpacked Nitro server
-        // __dirname is inside app.asar, Nitro must be in app.asar.unpacked
-        let serverPath = path.join(__dirname, "../../.output/server/index.mjs");
-        serverPath = serverPath.replace(/app\.asar[/\\]/g, "app.asar.unpacked/");
-        // Normalise to OS path separators for spawn
-        const serverNativePath = path.normalize(serverPath);
-        log.info(`[main] Spawning Nitro server: ${serverNativePath}`);
-
-        // Use spawn with node (process.execPath is the node bundled in Electron)
-        // ELECTRON_RUN_AS_NODE prevents a fork bomb — it makes Electron behave as pure Node
-        await new Promise<void>((resolve, reject) => {
-          nitroServer = spawn(process.execPath, [serverNativePath], {
-            env: {
-              ...process.env,
-              NITRO_PORT: prodServerPort!.toString(),
-              NITRO_HOST: "127.0.0.1",
-              ELECTRON_RUN_AS_NODE: "1",
-            },
-            stdio: "pipe",
-            detached: false,
-          });
-
-          const proc = nitroServer;
-          proc!.stdout?.on("data", (d: Buffer) => {
-            log.info(`[nitro] ${d.toString().trim()}`);
-          });
-          proc!.stderr?.on("data", (d: Buffer) => {
-            const msg = d.toString().trim();
-            log.info(`[nitro] ${msg}`);
-            if (msg.includes("Listening") || msg.includes("listening")) resolve();
-          });
-          proc!.on("error", (err: Error) => {
-            log.error("[main] Nitro spawn error:", err);
-            reject(err);
-          });
-          // Give up to 5 seconds to start
-          setTimeout(resolve, 5000);
-        });
-
-        log.info(`[main] Nitro server ready on port ${prodServerPort}`);
-
-        // Now load the real app URL into the already-open window
-        const url = `http://127.0.0.1:${prodServerPort}`;
-        log.info(`[main] Production mode: loading Nitro server at ${url}`);
-        mainWindow?.loadURL(url);
-      } catch (err) {
-        log.error("[main] Failed to start production server:", err);
-      }
-    }
-  };
-
-  startApp();
+app.on("before-quit", () => {
+  isAppQuitting = true;
+  clearTimeout(rendererReadyTimer);
 });
+process.on("unhandledRejection", (error) => log.error("[electron] Unhandled rejection", error));
 
 app.on("window-all-closed", () => {
   // On Windows/Linux: don't quit when all windows are closed (we hide to tray instead)
@@ -390,6 +380,7 @@ app.on("activate", () => {
   // macOS: re-create window if dock icon is clicked and no windows are open
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
+    void loadDesktop();
   }
 });
 

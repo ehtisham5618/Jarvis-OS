@@ -3,10 +3,10 @@ export function Wallpaper() {
     <div className="wallpaper" aria-hidden>
       {/* base gradient */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(30,40,80,0.35),transparent_60%)]" />
-      {/* drifting nebulae */}
-      <div className="animate-drift-a absolute -top-[20%] -left-[10%] h-[70vh] w-[70vw] rounded-full bg-[radial-gradient(circle,rgba(79,125,255,0.28),transparent_60%)] blur-3xl" />
-      <div className="animate-drift-b absolute top-[30%] -right-[15%] h-[65vh] w-[65vw] rounded-full bg-[radial-gradient(circle,rgba(123,92,255,0.22),transparent_60%)] blur-3xl" />
-      <div className="animate-drift-c absolute -bottom-[25%] left-[20%] h-[60vh] w-[60vw] rounded-full bg-[radial-gradient(circle,rgba(97,199,255,0.15),transparent_60%)] blur-3xl" />
+      {/* Static nebulae avoid continuous full-window GPU compositing at idle. */}
+      <div className="absolute -top-[20%] -left-[10%] h-[70vh] w-[70vw] rounded-full bg-[radial-gradient(circle,rgba(79,125,255,0.28),transparent_60%)] blur-3xl" />
+      <div className="absolute top-[30%] -right-[15%] h-[65vh] w-[65vw] rounded-full bg-[radial-gradient(circle,rgba(123,92,255,0.22),transparent_60%)] blur-3xl" />
+      <div className="absolute -bottom-[25%] left-[20%] h-[60vh] w-[60vw] rounded-full bg-[radial-gradient(circle,rgba(97,199,255,0.15),transparent_60%)] blur-3xl" />
       {/* grain */}
       <div
         className="absolute inset-0 opacity-[0.03] mix-blend-overlay"
